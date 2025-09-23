@@ -64,3 +64,5 @@ async def create_car(
     await db.commit()
     await db.refresh(car)
     return car
+
+# todo: детальный просмотр со связанным заказ-нарядами
