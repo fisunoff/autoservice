@@ -1,4 +1,5 @@
 from .base import *
-from .profile import *
 from .car import *
 from .customer import *
+from .position import *
+from .profile import *
