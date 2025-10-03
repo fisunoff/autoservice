@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy import Column, Integer, String, Boolean, Date
 
 from models.base import Base
 
@@ -16,5 +16,7 @@ class Profile(Base):
     is_admin = Column(Boolean, nullable=False, default=False)
     is_mechanic = Column(Boolean, nullable=False, default=False)
     is_active = Column(Boolean, nullable=False, default=True)
+    hire_date = Column(Date, nullable=True)
+    fire_date = Column(Date, nullable=True)
     login = Column(String(255), nullable=False, unique=True)
     hashed_password = Column(String, nullable=False)

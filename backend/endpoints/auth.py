@@ -12,6 +12,7 @@ from models import (
     Profile,
     get_db,
 )
+from schemas.worker import ProfileCreate
 from utils.jwt_token import verify_token, verify_refresh_token
 from utils.security import hash_password, verify_password, TokenFactory
 
@@ -31,21 +32,10 @@ async def get_user(token_payload: dict = Depends(verify_token), db: AsyncSession
     return user
 
 
-class ProfileCreate(pydantic.BaseModel):
-    name: str = pydantic.Field(max_length=255)
-    surname: str = pydantic.Field(max_length=255)
-    patronymic: str = pydantic.Field(max_length=255)
-    tabel_number: str = pydantic.Field(max_length=10)
-    is_admin: bool = pydantic.Field(default=False)
-    is_mechanic: bool = pydantic.Field(default=False)
-    login: str
-    password: str
-
-
 @auth_router.post('/register', status_code=HTTPStatus.CREATED)
 async def register(
         user: ProfileCreate,
-        db: AsyncSession = Depends(get_db)
+        db: AsyncSession = Depends(get_db),
 ) -> dict[str, str]:
     stmt = select(Profile).where(Profile.login == user.login).limit(1)
     existing_user: Profile | None = (await db.execute(stmt)).scalar_one_or_none()

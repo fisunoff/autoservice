@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from jwt_token import verify_admin_token
-from sqlalchemy import select
+from sqlalchemy import select, Sequence
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models import get_db, Position
@@ -16,7 +16,7 @@ price_list_router = APIRouter(
 async def get_price_list(
     db: AsyncSession = Depends(get_db),
     _token_payload: dict = Depends(verify_token),
-) -> list[PositionData]:
+) -> Sequence[PositionData]:
     """
     Весь прейскурант
     """
@@ -28,7 +28,7 @@ async def get_price_list(
 async def get_details(
     db: AsyncSession = Depends(get_db),
     _token_payload: dict = Depends(verify_token),
-) -> list[PositionData]:
+) -> Sequence[PositionData]:
     """
     Получить все запчасти.
     """
@@ -40,7 +40,7 @@ async def get_details(
 async def get_works(
     db: AsyncSession = Depends(get_db),
     _token_payload: dict = Depends(verify_token),
-) -> list[PositionData]:
+) -> Sequence[PositionData]:
     """
     Получить все работы.
     """
