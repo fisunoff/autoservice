@@ -1,11 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
-from jwt_token import verify_admin_token
 from sqlalchemy import select, Sequence
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models import get_db, Position
 from schemas.pricelist import PositionData, BasePositionData
-from utils.jwt_token import verify_token
+from utils.jwt_token import verify_token, verify_admin_role
 
 price_list_router = APIRouter(
     tags=['Прейскурант'],
@@ -52,7 +51,7 @@ async def get_works(
 async def create_position(
         data: BasePositionData,
         db: AsyncSession = Depends(get_db),
-        _admin_token: dict = Depends(verify_admin_token),
+        _admin_token: dict = Depends(verify_admin_role),
 ):
     """
     Добавить позицию в прайс-лист. Только для администратора.
@@ -68,7 +67,7 @@ async def update_position(
         _id: int,
         data: BasePositionData,
         db: AsyncSession = Depends(get_db),
-        _admin_token: dict = Depends(verify_admin_token),
+        _admin_token: dict = Depends(verify_admin_role),
 ) -> PositionData:
     """
     Изменить позицию в прайс-листе. Только для администратора.
@@ -87,7 +86,7 @@ async def update_position(
 async def delete_position(
         _id: int,
         db: AsyncSession = Depends(get_db),
-        _admin_token: dict = Depends(verify_admin_token),
+        _admin_token: dict = Depends(verify_admin_role),
 ):
     """
     Сделать позицию неактивной

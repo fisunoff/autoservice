@@ -5,6 +5,7 @@ import pydantic
 __all__ = [
     'BaseWorkerData',
     'ReadWorkerData',
+    'ProfileCreate',
 ]
 
 class BaseWorkerData(pydantic.BaseModel):
