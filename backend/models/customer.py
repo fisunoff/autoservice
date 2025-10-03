@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String
+from sqlalchemy.orm import relationship
 
 from models.base import Base
 
@@ -13,3 +14,4 @@ class Customer(Base):
     surname = Column(String(255), nullable=False)
     patronymic = Column(String(255), nullable=False)
     phone = Column(String(20), nullable=False)
+    orders = relationship('Order', back_populates='customer')

@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String
+from sqlalchemy.orm import relationship
 
 from models.base import Base
 
@@ -14,3 +15,4 @@ class Car(Base):
     state_number = Column(String(20), nullable=False)
     vin = Column(String(50), nullable=False)
     year = Column(Integer, nullable=False)
+    orders = relationship('Order', back_populates='car')

@@ -1,6 +1,14 @@
 from fastapi import FastAPI
 
-from endpoints import auth, car, customer, pricelist, workers, wiki
+from endpoints import (
+    auth,
+    car,
+    customer,
+    pricelist,
+    workers,
+    wiki,
+    order,
+)
 
 app = FastAPI()
 
@@ -10,3 +18,4 @@ app.include_router(customer.customer_router, prefix='/customer')
 app.include_router(pricelist.price_list_router, prefix='/price_list')
 app.include_router(workers.workers_router, prefix='/worker')
 app.include_router(wiki.wiki_router, prefix='/wiki')
+app.include_router(order.order_router, prefix='/order')
