@@ -20,3 +20,4 @@ class Order(models.Base):
     paid_date = Column(Date, nullable=True)  # дата оплаты
     opened_date = Column(Date, nullable=False)  # дата открытия
     closed_date = Column(Date, nullable=True)  # дата закрытия
+    details = relationship('DetailUsage', back_populates='order')

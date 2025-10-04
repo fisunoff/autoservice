@@ -5,6 +5,7 @@ from pydantic import Field
 
 from schemas.car import CarData
 from schemas.customer import CustomerData
+from schemas.pricelist import PositionData
 
 
 class OrderCreate(pydantic.BaseModel):
@@ -23,3 +24,14 @@ class OrderReadData(pydantic.BaseModel):
     paid_date: datetime.date | None
     opened_date: datetime.date
     closed_date: datetime.date | None
+
+
+class DetailUsageForOrder(pydantic.BaseModel):
+    position: PositionData
+    price: float
+    quantity: float
+    cost: float
+
+
+class OrderDetailData(OrderReadData):
+    details: list[DetailUsageForOrder]
