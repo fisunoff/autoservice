@@ -5,7 +5,7 @@ from pydantic import Field
 
 from schemas.car import CarData
 from schemas.customer import CustomerData
-from schemas.pricelist import PositionData
+from schemas.pricelist import PositionData, WorkData
 
 
 class OrderCreate(pydantic.BaseModel):
@@ -32,6 +32,13 @@ class DetailUsageForOrder(pydantic.BaseModel):
     quantity: float
     cost: float
 
+class WorkUsageForOrder(pydantic.BaseModel):
+    position: WorkData
+    price: float
+    quantity: float
+    cost: float
+
 
 class OrderDetailData(OrderReadData):
     details: list[DetailUsageForOrder]
+    works: list[WorkUsageForOrder]

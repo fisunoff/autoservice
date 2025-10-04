@@ -6,7 +6,7 @@ from sqlalchemy.orm import selectinload
 from starlette import status
 
 import models
-from models import get_db, Order, DetailUsage
+from models import get_db, Order, DetailUsage, WorkUsage
 from schemas.order import OrderReadData, OrderCreate, OrderDetailData
 from utils.jwt_token import verify_token, verify_admin_role
 
@@ -22,6 +22,7 @@ async def get_prefetched_order(pk: int, db: AsyncSession) -> Order | None:
             selectinload(Order.car),
             selectinload(Order.customer),
             selectinload(Order.details).selectinload(DetailUsage.position),
+            selectinload(Order.works).selectinload(WorkUsage.position),
         )
         .where(Order.id == pk)
     )
@@ -193,7 +194,7 @@ async def delete_detail_usage(
     """
     detail = await db.get(models.Position, detail_pk)
     if not detail:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Деталь не найдена')
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Деталь не найдена')
 
     usage_stmt = (
         select(DetailUsage)
@@ -208,6 +209,124 @@ async def delete_detail_usage(
 
     await db.delete(usage)
     db.add(detail)
+    await db.commit()
+    order = await get_prefetched_order(order_pk, db)
+    return order
+
+
+class WorkUsageAddModel(pydantic.BaseModel):
+    work_id: int = pydantic.Field(ge=0)
+    quantity: float = pydantic.Field(ge=0)
+
+
+@order_router.post('/{pk}/works', response_model=OrderDetailData)
+async def add_work_usage(
+        pk: int,
+        detail_data: WorkUsageAddModel,
+        db: AsyncSession = Depends(get_db),
+        _token: str = Depends(verify_token),
+):
+    """
+    Добавить к заказ-наряду новую работу.
+    """
+    order = await db.get(models.Order, pk)
+    if not order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    work = await db.get(models.Position, detail_data.work_id)
+    if not work:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Работа не найдена')
+
+    if not work.is_work:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Запись должна быть работой, а не деталью.')
+
+    detail_usage_stmt = (
+        select(WorkUsage)
+        .where(
+            WorkUsage.position_id == detail_data.work_id,
+            WorkUsage.order_id == pk,
+        )
+        .limit(1)
+    )
+    detail_usage = (await db.execute(detail_usage_stmt)).scalars().first()
+    if detail_usage:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Для этой работы уже есть запись.')
+
+    usage = WorkUsage(
+        order_id=pk,
+        position_id=work.id,
+        price=work.price,
+        quantity=detail_data.quantity,
+    )
+    db.add(usage)
+    await db.commit()
+    order = await get_prefetched_order(pk, db)
+    return order
+
+
+class WorkUsageEditModel(pydantic.BaseModel):
+    price: float = pydantic.Field(ge=0)
+    quantity: float = pydantic.Field(ge=0)
+
+
+@order_router.put('/{order_pk}/works/{work_pk}', response_model=OrderDetailData)
+async def edit_work_usage(
+        order_pk: int,
+        work_pk: int,
+        work_data: WorkUsageEditModel,
+        db: AsyncSession = Depends(get_db),
+        _token: str = Depends(verify_token),
+):
+    """
+    Изменить количеству/цену для проведения работы.
+    """
+    work = await db.get(models.Position, work_pk)
+    if not work:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Работа не найдена')
+
+    usage_stmt = (
+        select(WorkUsage)
+        .where(WorkUsage.order_id == order_pk, WorkUsage.position_id == work_pk)
+        .limit(1)
+    )
+    usage = (await db.execute(usage_stmt)).scalars().first()
+    if not usage:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    usage.price = work_data.price
+    usage.quantity = work_data.quantity
+    db.add(usage)
+
+    await db.commit()
+    order = await get_prefetched_order(order_pk, db)
+    return order
+
+
+@order_router.delete('/{order_pk}/works/{detail_pk}', response_model=OrderDetailData)
+async def delete_work_usage(
+        order_pk: int,
+        work_pk: int,
+        db: AsyncSession = Depends(get_db),
+        _token: str = Depends(verify_token),
+):
+    """
+    Удалить использование работы.
+    """
+    work = await db.get(models.Position, work_pk)
+    if not work:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Работа не найдена')
+
+    usage_stmt = (
+        select(WorkUsage)
+        .where(WorkUsage.order_id == order_pk, WorkUsage.position_id == work_pk)
+        .limit(1)
+    )
+    usage = (await db.execute(usage_stmt)).scalars().first()
+    if not usage:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    await db.delete(usage)
+
     await db.commit()
     order = await get_prefetched_order(order_pk, db)
     return order

@@ -21,3 +21,4 @@ class Order(models.Base):
     opened_date = Column(Date, nullable=False)  # дата открытия
     closed_date = Column(Date, nullable=True)  # дата закрытия
     details = relationship('DetailUsage', back_populates='order')
+    works = relationship('WorkUsage', back_populates='order')
