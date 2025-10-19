@@ -1,0 +1,93 @@
+import { createRouter, createWebHistory } from 'vue-router'
+import PageWorkOrder from '@/models/workOrder/PageWorkOrder.vue'
+import PageApp from '@/pages/PageApp.vue'
+import PageAuth from '@/pages/PageAuth.vue'
+import PageDefects from '@/models/defects/PageDefects.vue'
+import PageLeftovers from '@/models/leftovers/PageLeftovers.vue'
+import PagePriceList from '@/models/priceList/PagePriceList.vue'
+import PageWorkers from '@/models/workers/PageWorkers.vue'
+import PageLogin from '@/models/login/PageLogin.vue'
+import PageRegister from '@/models/login/PageRegister.vue'
+import { getLocalAccessToken } from '@/api/tokensSrvices.ts'
+
+export const WORK_ORDER_NAME = 'workOrder'
+export const WORK_ORDER_ROUTE = ''
+export const DEFECTS_NAME = 'defects'
+export const DEFECTS_ROUTE = 'defects'
+export const LEFT_OVERS_NAME = 'leftOvers'
+export const LEFT_OVERS_ROUTE = 'left_overs'
+export const PRICE_LIST_NAME = 'priceList'
+export const PRICE_LIST_ROUTE = 'price_list'
+export const WORKERS_NAME = 'workers'
+export const WORKERS_ROUTE = 'workers'
+export const LOGIN_NAME = 'login'
+export const LOGIN_ROUTE = ''
+export const REGISTER_NAME = 'register'
+export const REGISTER_ROUTE = 'register'
+const router = createRouter({
+  history: createWebHistory(import.meta.env.BASE_URL),
+  routes: [
+    {
+      name: 'app',
+      path: '/',
+      meta: { requiresAuth: true },
+      component: PageApp,
+      children: [
+        {
+          name: WORK_ORDER_NAME,
+          path: WORK_ORDER_ROUTE,
+          component: PageWorkOrder,
+        },
+        {
+          name: DEFECTS_NAME,
+          path: DEFECTS_ROUTE,
+          component: PageDefects,
+        },
+        {
+          name: LEFT_OVERS_NAME,
+          path: LEFT_OVERS_ROUTE,
+          component: PageLeftovers,
+        },
+        {
+          name: PRICE_LIST_NAME,
+          path: PRICE_LIST_ROUTE,
+          component: PagePriceList,
+        },
+        {
+          name: WORKERS_NAME,
+          path: WORKERS_ROUTE,
+          component: PageWorkers,
+        },
+      ],
+    },
+    {
+      name: 'auth',
+      path: '/auth',
+      meta: { requiresAuth: false },
+      component: PageAuth,
+      children: [
+        {
+          name: LOGIN_NAME,
+          path: LOGIN_ROUTE,
+          component: PageLogin,
+        },
+        {
+          name: REGISTER_NAME,
+          path: REGISTER_ROUTE,
+          component: PageRegister,
+        },
+      ],
+    },
+  ],
+})
+
+router.beforeEach((to, from) => {
+  const token = getLocalAccessToken()
+  if (to.meta.requiresAuth && token == null) {
+    return {
+      name: LOGIN_NAME,
+      query: { redirect: to.fullPath },
+    }
+  }
+})
+export default router
