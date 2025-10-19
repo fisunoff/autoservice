@@ -1,66 +1,115 @@
 <script setup lang="ts">
-import { onMounted, reactive } from 'vue'
-import api from '@/api/api.ts'
+import { onMounted, reactive, ref } from 'vue'
+import api from '@/api/api'
+import { ElMessage } from 'element-plus'
 import { formatDateToRu } from '@/api/formatServices.ts'
+import OrdersTable from './WorkOrdersTable.vue'
+import CreateOrderDialog from './CreateOrderDialog.vue'
 
-export interface WorkorderListItem {
+export interface WorkOrderItem {
   id: number
   number: number
   car: string
-  worker: string
+  customer: string
   openDate: string
   status: string
 }
+export interface NewOrderData {
+  customer_id: number | null
+  car_id: number | null
+  car_received: boolean
+  opened_date: string
+}
+export interface Customer {
+  id: number
+  name: string
+  surname: string
+  phone: string
+}
+export interface Car {
+  id: number
+  brand: string
+  model: string
+  state_number: string
+}
 
-const colums = [
+const tableData = reactive<WorkOrderItem[]>([])
+const customersList = reactive<Customer[]>([])
+const carsList = reactive<Car[]>([])
+const dialogVisible = ref(false)
+
+const columns = [
   { label: '№', key: 'number' },
   { label: 'Автомобиль', key: 'car' },
-  { label: 'Ответственный', key: 'worker' },
+  { label: 'Клиент', key: 'customer' },
   { label: 'Дата приема', key: 'openDate' },
 ]
-const tableData = reactive<WorkorderListItem[]>([])
+
 const fetchData = async () => {
   try {
-    const response = await api.get('/order')
+    const [ordersRes, customersRes, carsRes] = await Promise.all([
+      api.get('/order'),
+      api.get('/customer'),
+      api.get('/car'),
+    ])
+
     tableData.splice(0, tableData.length)
-    response.data.forEach((item, index) => {
-      const res: WorkorderListItem = {} as WorkorderListItem
-      res.id = item.id
-      res.number = index + 1
-      res.car = `${item.car.brand} ${item.car.model} \n ${item.car.vin}`
-      res.worker = `${item.worker.surname} ${item.worker.name}`
-      res.openDate = formatDateToRu(item.openDate)
-      if (item.car_given_out) res.status = 'Выдан'
-      else if (item.car_received) res.status = 'Получен'
-      tableData.push(res)
+    ordersRes.data.forEach((item, index: number) => {
+      let status = 'В работе'
+      if (item.car_given_out) status = 'Выдан'
+      else if (item.paid_date) status = 'Оплачен'
+      else if (item.closed_date) status = 'Готов'
+
+      tableData.push({
+        id: item.id,
+        number: index + 1,
+        car: `${item.car.brand} ${item.car.model} (${item.car.state_number})`,
+        customer: `${item.customer.surname} ${item.customer.name}`,
+        openDate: formatDateToRu(item.opened_date),
+        status: status,
+      })
     })
+
+    customersList.splice(0, customersList.length, ...customersRes.data)
+    carsList.splice(0, carsList.length, ...carsRes.data)
   } catch (error) {
-    console.log(error)
+    ElMessage.error('Не удалось загрузить данные.')
+    console.error(error)
   }
 }
 
-onMounted(async () => {
-  await fetchData()
-})
+const handleCreateOrder = async (newOrderData: NewOrderData) => {
+  try {
+    await api.post('/order', newOrderData)
+    dialogVisible.value = false
+    ElMessage.success('Заказ-наряд успешно создан!')
+    await fetchData()
+  } catch (error) {
+    ElMessage.error('Ошибка при создании заказа.')
+    console.error(error)
+  }
+}
+
+onMounted(fetchData)
 </script>
 
 <template>
-  <div class="flex flex-col gap-2 p-10">
-    <el-table :data="tableData" border style="width: 100%">
-      <el-table-column
-        v-for="colum in colums"
-        :prop="colum.key"
-        :label="colum.label"
-        :key="colum.key"
-      />
+  <div class="flex flex-col gap-4 p-10">
+    <div class="self-end">
+      <el-button type="success" @click="dialogVisible = true"> Создать заказ-наряд </el-button>
+    </div>
 
-      <el-table-column label="Статус">
-        <template #default="{ item }">
-          <div class="px-3 py-2 rounded-sm bg-teal-300">{{ item.status }}</div>
-        </template>
-      </el-table-column>
-    </el-table>
+    <OrdersTable :items="tableData" :columns="columns">
+      <template #status="{ item }">
+        <div class="px-3 py-2 rounded-sm bg-teal-300">{{ item.status }}</div>
+      </template>
+    </OrdersTable>
+
+    <CreateOrderDialog
+      v-model:visible="dialogVisible"
+      :customers="customersList"
+      :cars="carsList"
+      @save="handleCreateOrder"
+    />
   </div>
 </template>
-
-<style scoped></style>

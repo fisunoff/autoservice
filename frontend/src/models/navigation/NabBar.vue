@@ -1,20 +1,12 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 
-import {
-  LEFT_OVERS_NAME,
-  PRICE_LIST_NAME,
-  WORKERS_NAME,
-  DEFECTS_NAME,
-  WORK_ORDERS_NAME,
-} from '@/router'
+import { PRICE_LIST_NAME, WORKERS_NAME, WORK_ORDERS_NAME } from '@/router'
 
 const navLinks = [
   { text: 'Заказ наряд', name: WORK_ORDERS_NAME },
-  { text: 'Остатки', name: LEFT_OVERS_NAME },
   { text: 'Прейскурант', name: PRICE_LIST_NAME },
   { text: 'Работники', name: WORKERS_NAME },
-  { text: 'Дефекты', name: DEFECTS_NAME },
 ]
 </script>
 
