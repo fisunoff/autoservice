@@ -55,7 +55,7 @@ onMounted(async () => {
       />
 
       <el-table-column label="Статус">
-        <template #default="item">
+        <template #default="{ item }">
           <div class="px-3 py-2 rounded-sm bg-teal-300">{{ item.status }}</div>
         </template>
       </el-table-column>
