@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from models import get_db
 from models.car import Car
 from schemas.car import CarData, BaseCarData
-from utils.jwt_token import verify_token
+from utils.jwt_token import verify_token, verify_admin_role
 
 car_router = APIRouter(
     tags=['Автомобиль'],
@@ -20,7 +20,10 @@ class CarOptionsResponse(pydantic.BaseModel):
 
 
 @car_router.options('/', response_model=CarOptionsResponse)
-async def get_car_options(db: AsyncSession = Depends(get_db)):
+async def get_car_options(
+        db: AsyncSession = Depends(get_db),
+        _token_payload: dict = Depends(verify_admin_role),
+):
     """
     Возвращает словарь с опциями для создания/фильтрации машин.
     Ключи - бренды, значения - списки уникальных моделей для этого бренда.
@@ -40,7 +43,7 @@ async def get_car_options(db: AsyncSession = Depends(get_db)):
 @car_router.get('/', response_model=list[CarData])
 async def get_cars(
         db: AsyncSession = Depends(get_db),
-        _token_payload: dict = Depends(verify_token),
+        _token_payload: dict = Depends(verify_admin_role),
 ) -> list[CarData]:
     """
     Список всех автомобилей.
@@ -54,7 +57,7 @@ async def get_cars(
 async def create_car(
         data: BaseCarData,
         db: AsyncSession = Depends(get_db),
-        _token_payload: dict = Depends(verify_token),
+        _token_payload: dict = Depends(verify_admin_role),
 ):
     """
     Добавить автомобиль.
