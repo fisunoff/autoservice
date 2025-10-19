@@ -1,15 +1,21 @@
 <script setup lang="ts">
-import Navbar from '@/models/navigation/Navbar.vue'
+import NabBar from '@/models/navigation/NabBar.vue'
+import router, { LOGIN_NAME } from '@/router'
+
+const logout = () => {
+  localStorage.clear()
+  router.push({ name: LOGIN_NAME })
+}
 </script>
 
 <template>
   <div class="flex flex-col gap-1">
-    <div class="flex-end">
-      <span>Фисунов Антон</span>
-      <ElButton>Выход</ElButton>
+    <div class="self-end px-5 pt-2">
+      <span class="text-sm mr-2">Фисунов Антон</span>
+      <button class="font-bold" @click="logout">Выход</button>
     </div>
 
-    <Navbar />
+    <NabBar />
   </div>
   <RouterView />
 </template>

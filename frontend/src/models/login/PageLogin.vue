@@ -12,7 +12,7 @@ const password = ref('')
 const onLogin = async () => {
   const response = await api.post('/auth/login', { login: login.value, password: password.value })
   if (response.status === 200) {
-    setUser(response.data.accessToken, response.data.refreshToken)
+    setUser(response.data.access_token, response.data.refresh_token)
     emit('gotoApp')
   } else {
     alert('Неверный логин или пароль')
