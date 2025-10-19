@@ -1,76 +1,163 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { LOGIN_NAME } from '@/router'
-import api from '@/api/api.ts'
-import { setUser } from '@/api/tokensSrvices.ts'
+import api from '@/api/api'
+import { setUser } from '@/api/tokensSrvices'
 
 const emit = defineEmits<{
   (ev: 'gotoApp'): void
 }>()
-const login = ref('')
-const password = ref('')
-const passwordVerification = ref('')
-const tabelNumber = ref('')
-const name = ref('')
-const surname = ref('')
-const patronymic = ref('')
-const hireDate = ref('')
-const isAdmin = ref(false)
-const isMechanic = ref(false)
-const isActive = ref(false)
-const onRegister = async () => {
-  if (password.value !== passwordVerification.value) return alert('Пароли не совпадают')
-  try {
-    const response = await api.post('/auth/register', {
-      login: login.value,
-      password: password.value,
-      name: name.value,
-      surname: surname.value,
-      patronymic: patronymic.value,
-      tabel_number: tabelNumber.value,
-      hire_date: hireDate.value,
-      is_admin: isAdmin.value,
-      is_active: isActive.value,
-      is_mechanic: isMechanic.value,
-    })
-    setUser(response.data.accessToken, response.data.refreshToken)
-    emit('gotoApp')
-  } catch (error) {
-    alert('Произошла ошибка при регистрации.')
-    console.error('Registration failed:', error)
+const router = useRouter()
+
+const formRef = ref<FormInstance>()
+const loading = ref(false)
+
+const form = reactive({
+  surname: '',
+  name: '',
+  patronymic: '',
+  tabel_number: '',
+  hire_date: '',
+  is_admin: false,
+  is_mechanic: false,
+  is_active: true,
+  login: '',
+  password: '',
+  passwordVerification: '',
+})
+
+const validatePassConfirm = (rule, value, callback) => {
+  if (value === '') {
+    callback(new Error('Пожалуйста, подтвердите пароль'))
+  } else if (value !== form.password) {
+    callback(new Error('Пароли не совпадают!'))
+  } else {
+    callback()
   }
+}
+
+const rules = reactive<FormRules>({
+  surname: [{ required: true, message: 'Введите фамилию', trigger: 'blur' }],
+  name: [{ required: true, message: 'Введите имя', trigger: 'blur' }],
+  tabel_number: [{ required: true, message: 'Введите табельный номер', trigger: 'blur' }],
+  hire_date: [{ required: true, message: 'Выберите дату найма', trigger: 'change' }],
+  login: [{ required: true, message: 'Введите логин', trigger: 'blur' }],
+  password: [{ required: true, message: 'Введите пароль', trigger: 'blur' }],
+  passwordVerification: [{ required: true, validator: validatePassConfirm, trigger: 'blur' }],
+})
+
+const handleRegister = async (formEl: FormInstance | undefined) => {
+  if (!formEl) return
+  await formEl.validate(async (valid) => {
+    if (valid) {
+      loading.value = true
+      try {
+        const { passwordVerification, ...payload } = form
+        const response = await api.post('/auth/register', payload)
+        setUser(response.data.access_token, response.data.refresh_token)
+        ElMessage.success('Регистрация прошла успешно!')
+        emit('gotoApp')
+      } catch (error) {
+        console.error('Registration failed:', error)
+        ElMessage.error('Произошла ошибка при регистрации.')
+      } finally {
+        loading.value = false
+      }
+    }
+  })
 }
 </script>
 
 <template>
-  <main class="mx-200 my-60 rounded-md bg-teal-300 flex flex-col gap-2 px-5 py-4">
-    <span class="text-xl font-bold">Вход</span>
-    <input v-model="surname" placeholder="Введите фамилию" />
-    <input v-model="name" placeholder="Введите имя" />
-    <input v-model="patronymic" placeholder="Введите отчество" />
-    <input v-model="tabelNumber" placeholder="Введите табельный номер" />
-    <input v-model="hireDate" placeholder="Введите дату найма" type="date" />
+  <main class="flex justify-center items-center min-h-screen bg-gray-100 py-8">
+    <el-card class="w-full max-w-2xl">
+      <template #header>
+        <div class="text-center text-xl font-bold">Регистрация</div>
+      </template>
 
-    <div class="flex gap-2 items-center">
-      <input id="isAdmin" v-model="isAdmin" type="checkbox" />
-      <label for="isAdmin">Админ</label>
-    </div>
-    <div class="flex gap-2 items-center">
-      <input id="isMechanic" v-model="isMechanic" type="checkbox" />
-      <label for="isMechanic">Механик</label>
-    </div>
-    <div class="flex gap-2 items-center">
-      <input id="isActive" v-model="isActive" type="checkbox" />
-      <label for="isActive">Активный</label>
-    </div>
+      <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
+        <el-divider content-position="left">Личные данные</el-divider>
+        <el-row :gutter="20">
+          <el-col :span="8">
+            <el-form-item label="Фамилия" prop="surname">
+              <el-input v-model="form.surname" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="Имя" prop="name">
+              <el-input v-model="form.name" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="Отчество" prop="patronymic">
+              <el-input v-model="form.patronymic" />
+            </el-form-item>
+          </el-col>
+        </el-row>
 
-    <input v-model="login" placeholder="Введите логин" />
-    <input v-model="password" placeholder="Введите пароль" type="password" />
-    <input v-model="passwordVerification" placeholder="Подтвердите пароль" type="password" />
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="Табельный номер" prop="tabel_number">
+              <el-input v-model="form.tabel_number" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="Дата найма" prop="hire_date">
+              <el-date-picker
+                v-model="form.hire_date"
+                type="date"
+                placeholder="Выберите дату"
+                style="width: 100%"
+                value-format="YYYY-MM-DD"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
 
-    <RouterLink :to="{ name: LOGIN_NAME }">Уже есть профиль? Войти</RouterLink>
-    <button @click="onRegister">Зарегистрироваться</button>
+        <el-divider content-position="left">Роли и доступы</el-divider>
+        <el-form-item label="Права пользователя">
+          <el-checkbox v-model="form.is_admin" label="Администратор" />
+          <el-checkbox v-model="form.is_mechanic" label="Механик" />
+          <el-checkbox v-model="form.is_active" label="Активен" />
+        </el-form-item>
+
+        <el-divider content-position="left">Данные для входа</el-divider>
+        <el-form-item label="Логин" prop="login">
+          <el-input v-model="form.login" />
+        </el-form-item>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="Пароль" prop="password">
+              <el-input v-model="form.password" type="password" show-password />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="Подтверждение пароля" prop="passwordVerification">
+              <el-input v-model="form.passwordVerification" type="password" show-password />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-form-item class="mt-6">
+          <el-button
+            type="primary"
+            class="w-full"
+            size="large"
+            :loading="loading"
+            @click="handleRegister(formRef)"
+          >
+            Зарегистрироваться
+          </el-button>
+        </el-form-item>
+      </el-form>
+
+      <div class="text-center mt-4">
+        <el-link type="primary" @click="router.push({ name: LOGIN_NAME })">
+          Уже есть профиль? Войти
+        </el-link>
+      </div>
+    </el-card>
   </main>
 </template>
-
-<style scoped></style>
