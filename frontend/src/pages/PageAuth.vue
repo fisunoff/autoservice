@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import router, { WORK_ORDER_NAME } from '@/router'
+import router, { WORK_ORDERS_NAME } from '@/router'
 
 const gotoApp = () => {
-  router.push({ name: WORK_ORDER_NAME })
+  router.push({ name: WORK_ORDERS_NAME })
 }
 </script>
 

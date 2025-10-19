@@ -2,15 +2,15 @@
 import { RouterLink } from 'vue-router'
 
 import {
-  WORK_ORDER_NAME,
   LEFT_OVERS_NAME,
   PRICE_LIST_NAME,
   WORKERS_NAME,
   DEFECTS_NAME,
+  WORK_ORDERS_NAME,
 } from '@/router'
 
 const navLinks = [
-  { text: 'Заказ наряд', name: WORK_ORDER_NAME },
+  { text: 'Заказ наряд', name: WORK_ORDERS_NAME },
   { text: 'Остатки', name: LEFT_OVERS_NAME },
   { text: 'Прейскурант', name: PRICE_LIST_NAME },
   { text: 'Работники', name: WORKERS_NAME },

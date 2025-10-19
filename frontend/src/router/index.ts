@@ -9,9 +9,12 @@ import PageWorkers from '@/models/workers/PageWorkers.vue'
 import PageLogin from '@/models/login/PageLogin.vue'
 import PageRegister from '@/models/login/PageRegister.vue'
 import { getLocalAccessToken } from '@/api/tokensSrvices.ts'
+import PageWorkOrdersList from '@/models/workOrder/PageWorkOrdersList.vue'
 
+export const WORK_ORDERS_NAME = 'workOrders'
+export const WORK_ORDERS_ROUTE = ''
 export const WORK_ORDER_NAME = 'workOrder'
-export const WORK_ORDER_ROUTE = ''
+export const WORK_ORDER_ROUTE = 'work_order/:id'
 export const DEFECTS_NAME = 'defects'
 export const DEFECTS_ROUTE = 'defects'
 export const LEFT_OVERS_NAME = 'leftOvers'
@@ -37,6 +40,11 @@ const router = createRouter({
           name: WORK_ORDER_NAME,
           path: WORK_ORDER_ROUTE,
           component: PageWorkOrder,
+        },
+        {
+          name: WORK_ORDERS_NAME,
+          path: WORK_ORDERS_ROUTE,
+          component: PageWorkOrdersList,
         },
         {
           name: DEFECTS_NAME,
@@ -81,7 +89,7 @@ const router = createRouter({
   ],
 })
 
-router.beforeEach((to, from) => {
+router.beforeEach((to) => {
   const token = getLocalAccessToken()
   if (to.meta.requiresAuth && token == null) {
     return {
