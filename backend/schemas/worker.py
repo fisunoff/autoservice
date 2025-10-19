@@ -22,7 +22,8 @@ class ReadWorkerData(BaseWorkerData):
     is_mechanic: bool
     is_active: bool
     login: str
-    fire_date: datetime.date
+    fire_date: datetime.date | None
+
 
 class ProfileCreate(BaseWorkerData):
     is_admin: bool

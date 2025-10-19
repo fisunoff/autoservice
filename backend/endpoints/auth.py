@@ -12,7 +12,7 @@ from models import (
     Profile,
     get_db,
 )
-from schemas.worker import ProfileCreate
+from schemas.worker import ProfileCreate, ReadWorkerData
 from utils.jwt_token import verify_token, verify_refresh_token
 from utils.security import hash_password, verify_password, TokenFactory
 
@@ -32,11 +32,11 @@ async def get_user(token_payload: dict = Depends(verify_token), db: AsyncSession
     return user
 
 
-@auth_router.post('/register', status_code=HTTPStatus.CREATED)
+@auth_router.post('/register', status_code=HTTPStatus.CREATED, response_model=ReadWorkerData)
 async def register(
         user: ProfileCreate,
         db: AsyncSession = Depends(get_db),
-) -> dict[str, str]:
+):
     stmt = select(Profile).where(Profile.login == user.login).limit(1)
     existing_user: Profile | None = (await db.execute(stmt)).scalar_one_or_none()
     if existing_user:
@@ -46,7 +46,8 @@ async def register(
     new_user = Profile(**user_dict, hashed_password=hash_password(user.password))
     db.add(new_user)
     await db.commit()
-    return {'message': 'User created successfully'}
+    await db.refresh(new_user)
+    return new_user
 
 
 class UserLogin(pydantic.BaseModel):

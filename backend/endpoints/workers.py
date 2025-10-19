@@ -1,3 +1,4 @@
+import datetime
 from http import HTTPStatus
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -37,7 +38,7 @@ async def hire(
     """
     Нанять сотрудника на работу. Доступно администратору.
     """
-    return endpoints.auth.register(user, db=db)
+    return await endpoints.auth.register(user, db=db)
 
 
 @workers_router.post('/{pk}/fire', response_model=ReadWorkerData)
@@ -54,5 +55,7 @@ async def fire(
     if not worker:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND,)
     worker.is_active = False
+    worker.fire_date = datetime.datetime.now().date()
+    db.add(worker)
     await db.commit()
     return worker
