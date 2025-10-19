@@ -1,3 +1,5 @@
+import datetime
+
 import pydantic
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
@@ -58,6 +60,42 @@ async def get_order(
     order = await get_prefetched_order(pk, db)
     if not order:
         raise HTTPException(status.HTTP_404_NOT_FOUND)
+    return order
+
+@order_router.get('/{pk}/set_paid', response_model=OrderDetailData)
+async def set_paid(
+        pk: int,
+        db: AsyncSession = Depends(get_db),
+        _token: str = Depends(verify_admin_role),
+):
+    """
+    Указать, что заказ-наряд оплачен. Только для администратора.
+    """
+    order = await get_prefetched_order(pk, db)
+    if not order:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+    if order.paid_date or order.closed_date:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail='Невозможно перевести заказ в статус Оплачен')
+    order.paid_date = datetime.datetime.now()
+    return order
+
+
+
+@order_router.get('/{pk}/close', response_model=OrderDetailData)
+async def close_order(
+        pk: int,
+        db: AsyncSession = Depends(get_db),
+        _token: str = Depends(verify_admin_role),
+):
+    """
+    Закрыть заказ-наряд. Только для администратора.
+    """
+    order = await get_prefetched_order(pk, db)
+    if not order:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+    if not order.paid_date or order.closed_date:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail='Невозможно перевести заказ в статус Закрыт')
+    order.closed_date = datetime.datetime.now()
     return order
 
 
