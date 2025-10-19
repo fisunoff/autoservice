@@ -35,7 +35,7 @@ async def get_details(
     results = (await db.execute(stmt)).scalars().all()
     return results
 
-@price_list_router.get('works', response_model=list[PositionData])
+@price_list_router.get('/works', response_model=list[PositionData])
 async def get_works(
     db: AsyncSession = Depends(get_db),
     _token_payload: dict = Depends(verify_token),
