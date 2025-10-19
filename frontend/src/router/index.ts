@@ -10,6 +10,8 @@ import PageLogin from '@/models/login/PageLogin.vue'
 import PageRegister from '@/models/login/PageRegister.vue'
 import { getLocalAccessToken } from '@/api/tokensSrvices.ts'
 import PageWorkOrdersList from '@/models/workOrder/PageWorkOrdersList.vue'
+import PageCustomers from '@/models/customers/PageCustomers.vue'
+import PageCars from '@/models/cars/PageCars.vue'
 
 export const WORK_ORDERS_NAME = 'workOrders'
 export const WORK_ORDERS_ROUTE = ''
@@ -27,6 +29,10 @@ export const LOGIN_NAME = 'login'
 export const LOGIN_ROUTE = ''
 export const REGISTER_NAME = 'register'
 export const REGISTER_ROUTE = 'register'
+export const CUSTOMER_NAME = 'customer'
+export const CUSTOMER_ROUTE = 'customer'
+export const CARS_NAME = 'car'
+export const CARS_ROUTE = 'car'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -65,6 +71,16 @@ const router = createRouter({
           name: WORKERS_NAME,
           path: WORKERS_ROUTE,
           component: PageWorkers,
+        },
+        {
+          name: CUSTOMER_NAME,
+          path: CUSTOMER_ROUTE,
+          component: PageCustomers,
+        },
+        {
+          name: CARS_NAME,
+          path: CARS_ROUTE,
+          component: PageCars,
         },
       ],
     },
