@@ -30,7 +30,7 @@ async def get_workers(
 
 
 @workers_router.get('/me', response_model=ReadWorkerData)
-async def get_workers(
+async def get_me(
         db: AsyncSession = Depends(get_db),
         token_payload: dict = Depends(verify_token),
 ) -> ReadWorkerData:
