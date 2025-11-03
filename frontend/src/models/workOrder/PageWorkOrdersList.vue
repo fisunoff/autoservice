@@ -56,9 +56,8 @@ const fetchData = async () => {
     tableData.splice(0, tableData.length)
     ordersRes.data.forEach((item, index: number) => {
       let status = 'В работе'
-      if (item.car_given_out) status = 'Выдан'
+      if (item.closed_date) status = 'Готов'
       else if (item.paid_date) status = 'Оплачен'
-      else if (item.closed_date) status = 'Готов'
 
       tableData.push({
         id: item.id,

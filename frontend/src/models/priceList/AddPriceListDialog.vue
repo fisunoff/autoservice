@@ -66,7 +66,7 @@ const handleClose = () => {
       <el-form-item label="Цена">
         <el-input-number v-model="newItemForm.price" :min="0" controls-position="right" />
       </el-form-item>
-      <el-form-item label="В наличии">
+      <el-form-item v-if="!newItemForm.is_work" label="В наличии">
         <el-input-number
           v-model="newItemForm.in_stock_quantity"
           :min="0"

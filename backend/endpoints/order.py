@@ -62,7 +62,7 @@ async def get_order(
         raise HTTPException(status.HTTP_404_NOT_FOUND)
     return order
 
-@order_router.get('/{pk}/set_paid', response_model=OrderDetailData)
+@order_router.post('/{pk}/set_paid', response_model=OrderDetailData)
 async def set_paid(
         pk: int,
         db: AsyncSession = Depends(get_db),
@@ -76,12 +76,14 @@ async def set_paid(
         raise HTTPException(status.HTTP_404_NOT_FOUND)
     if order.paid_date or order.closed_date:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail='Невозможно перевести заказ в статус Оплачен')
-    order.paid_date = datetime.datetime.now()
+    order.paid_date = datetime.datetime.now().date()
+    db.add(order)
+    await db.commit()
     return order
 
 
 
-@order_router.get('/{pk}/close', response_model=OrderDetailData)
+@order_router.post('/{pk}/close', response_model=OrderDetailData)
 async def close_order(
         pk: int,
         db: AsyncSession = Depends(get_db),
@@ -95,7 +97,9 @@ async def close_order(
         raise HTTPException(status.HTTP_404_NOT_FOUND)
     if not order.paid_date or order.closed_date:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail='Невозможно перевести заказ в статус Закрыт')
-    order.closed_date = datetime.datetime.now()
+    order.closed_date = datetime.datetime.now().date()
+    db.add(order)
+    await db.commit()
     return order
 
 
