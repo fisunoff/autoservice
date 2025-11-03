@@ -37,7 +37,7 @@ async def get_me(
     """
     Сведения о себе.
     """
-    pk = token_payload['sub']
+    pk = int(token_payload['sub'])
     stmt = select(Profile).where(Profile.id == pk)
     result = (await db.execute(stmt)).scalars().first()
     return result
