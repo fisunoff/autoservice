@@ -22,7 +22,7 @@ class CarOptionsResponse(pydantic.BaseModel):
 @car_router.options('/', response_model=CarOptionsResponse)
 async def get_car_options(
         db: AsyncSession = Depends(get_db),
-        _token_payload: dict = Depends(verify_admin_role),
+        _token_payload: dict = Depends(verify_token),
 ):
     """
     Возвращает словарь с опциями для создания/фильтрации машин.
@@ -43,7 +43,7 @@ async def get_car_options(
 @car_router.get('/', response_model=list[CarData])
 async def get_cars(
         db: AsyncSession = Depends(get_db),
-        _token_payload: dict = Depends(verify_admin_role),
+        _token_payload: dict = Depends(verify_token),
 ) -> list[CarData]:
     """
     Список всех автомобилей.
@@ -60,7 +60,7 @@ async def create_car(
         _token_payload: dict = Depends(verify_admin_role),
 ):
     """
-    Добавить автомобиль.
+    Добавить автомобиль. Только администратор.
     """
     car = Car(**data.model_dump())
     db.add(car)
