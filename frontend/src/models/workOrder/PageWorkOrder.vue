@@ -12,6 +12,8 @@ interface OrderDetail {
   car: { brand: string; model: string; state_number: string; vin: string; year: number }
   details: OrderItem[]
   works: OrderItem[]
+  paid_date: string;
+  closed_date: string;
 }
 interface OrderItem {
   position: { id: number; title: string; unit: string }
@@ -114,6 +116,15 @@ const handleSave = async (payload: { itemId?: number; quantity: number; price?: 
   }
 }
 
+const payOrder = async()=>{
+  await api.post(`/order/${orderId}/set_paid`)
+  await fetchOrderData();
+}
+
+const closeOrder = async () =>{
+  await api.post(`/order/${orderId}/close`)
+  await fetchOrderData();
+}
 onMounted(async () => {
   await fetchOrderData()
   await fetchPriceLists()
@@ -143,6 +154,10 @@ onMounted(async () => {
           <p>Гос. номер: {{ order.car.state_number }}</p>
           <p>VIN: {{ order.car.vin }}</p>
         </div>
+        <div class="col-start-2 flex justify-end gap-2">
+          <el-button v-if="!order.paid_date && !order.closed_date" type="success" @click="payOrder">Оплачен</el-button>
+          <el-button v-if="order.paid_date && !order.closed_date" type="danger" @click="closeOrder">Закрыть</el-button>
+        </div>
       </div>
     </el-card>
 
@@ -152,7 +167,7 @@ onMounted(async () => {
           <el-radio-button label="works">Работы</el-radio-button>
           <el-radio-button label="details">Запчасти</el-radio-button>
         </el-radio-group>
-        <el-button type="primary" @click="openAddDialog">
+        <el-button v-if="!order.paid_date && !order.closed_date" type="primary" @click="openAddDialog">
           Добавить {{ activeTab === 'works' ? 'работу' : 'запчасть' }}
         </el-button>
       </div>
