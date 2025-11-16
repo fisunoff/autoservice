@@ -18,3 +18,11 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: autoservice
+  nginx:
+    build:
+      dockerfile: nginx.Dockerfile
+    container_name: autoservice_gateway
+    ports:
+      - "80:80"
+    depends_on:
+      - backend

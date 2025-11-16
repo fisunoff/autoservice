@@ -7,7 +7,7 @@ import {
   setUser,
 } from '@/api/tokensSrvices.ts'
 
-export const BASE_URL = 'http://localhost:8000'
+export const BASE_URL = 'http://localhost:80/api'
 const api = axios.create({
   baseURL: BASE_URL,
   headers: {

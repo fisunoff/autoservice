@@ -18,4 +18,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 ENTRYPOINT ["sh", "-c"]
-CMD ["alembic upgrade head && uvicorn main:app --host 0.0.0.0 --proxy-headers --port 8000"]
+CMD ["alembic upgrade head && uvicorn main:app --host 0.0.0.0 --proxy-headers --port 8000 --root-path=\"/api\" "]
