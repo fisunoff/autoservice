@@ -12,7 +12,7 @@ import { getLocalAccessToken } from '@/api/tokensSrvices.ts'
 import PageWorkOrdersList from '@/models/workOrder/PageWorkOrdersList.vue'
 import PageCustomers from '@/models/customers/PageCustomers.vue'
 import PageCars from '@/models/cars/PageCars.vue'
-import { useUserStore } from '@/stores/userStore.ts'
+import WikiPage from '@/models/wiki/WikiPage.vue'
 
 export const WORK_ORDERS_NAME = 'workOrders'
 export const WORK_ORDERS_ROUTE = ''
@@ -34,6 +34,8 @@ export const CUSTOMER_NAME = 'customer'
 export const CUSTOMER_ROUTE = 'customer'
 export const CARS_NAME = 'car'
 export const CARS_ROUTE = 'car'
+export const WIKI_NAME = 'wiki'
+export const WIKI_ROUTE = 'wiki'
 
 // const user = useUserStore();
 const router = createRouter({
@@ -84,6 +86,11 @@ const router = createRouter({
           name: CARS_NAME,
           path: CARS_ROUTE,
           component: PageCars,
+        },
+        {
+          name: WIKI_NAME,
+          path: WIKI_ROUTE,
+          component: WikiPage,
         },
       ],
     },

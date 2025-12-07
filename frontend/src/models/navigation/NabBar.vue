@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 
-import { PRICE_LIST_NAME, WORKERS_NAME, WORK_ORDERS_NAME, CUSTOMER_NAME, CARS_NAME } from '@/router'
+import {
+  PRICE_LIST_NAME,
+  WORKERS_NAME,
+  WORK_ORDERS_NAME,
+  CUSTOMER_NAME,
+  CARS_NAME,
+  WIKI_NAME,
+} from '@/router'
 
 const navLinks = [
   { text: 'Заказ наряд', name: WORK_ORDERS_NAME },
@@ -9,6 +16,7 @@ const navLinks = [
   { text: 'Работники', name: WORKERS_NAME },
   { text: 'Клиенты', name: CUSTOMER_NAME },
   { text: 'Автомобили', name: CARS_NAME },
+  { text: 'База знаний', name: WIKI_NAME },
 ]
 </script>
 
@@ -60,11 +68,5 @@ const navLinks = [
 
 .nav-button:hover {
   background-color: #80cbc4;
-}
-
-.router-link-exact-active {
-  background-color: #5cbaba;
-  cursor: default;
-  pointer-events: none;
 }
 </style>
