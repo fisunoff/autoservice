@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import api from '@/api/api'
 import { ElMessage } from 'element-plus'
 import WikiTable from './WikiTable.vue'
@@ -20,7 +20,7 @@ const editedItem = ref<WikiItem>()
 const columns = [
   { label: 'Проблема', key: 'syndrome' },
   { label: 'Решение', key: 'solution' },
-  { label: 'Бренды', key: 'brands' },
+  { label: 'Бренд автомобиля', key: 'brands' },
 ]
 
 const fetchData = async () => {
@@ -37,6 +37,7 @@ const openDialogHandler = (item?: WikiItem) => {
   if (item) editedItem.value = { ...item }
   dialogVisible.value = true
 }
+
 const saveHandler = async (item: Partial<WikiItem>) => {
   try {
     await api.post('/wiki', item)
@@ -57,21 +58,76 @@ const deleteItem = async (item: WikiItem) => {
     console.error('Ошибка при удалении записи базы знаний', err)
   }
 }
+
+const filterBrand = ref<string>('')
+const uniqueBrands = computed<string[]>(() => {
+  const brands = new Set<string>()
+  tableData.forEach((item) => {
+    item.brands.forEach((brand) => {
+      if (brand.trim()) brands.add(brand.trim())
+    })
+  })
+  return Array.from(brands).sort()
+})
+
+const filteredItems = computed(() => {
+  if (!filterBrand.value) return tableData
+  return tableData.filter((item) => {
+    if (!item.brands) return false
+    return item.brands.some((brand) =>
+      brand.toLowerCase().includes(filterBrand.value.toLowerCase()),
+    )
+  })
+})
+
+const handleEditClick = (event: MouseEvent, item: WikiItem) => {
+  event.stopPropagation()
+  openDialogHandler(item)
+}
+
+const handleDeleteClick = (event: MouseEvent, item: WikiItem) => {
+  event.stopPropagation()
+  deleteItem(item)
+}
+
 onMounted(fetchData)
 </script>
 
 <template>
   <div class="flex flex-col gap-4 p-10">
+    <div class="filter-item">
+      <label>Фильтр по бренду:</label>
+      <el-select
+        v-model="filterBrand"
+        placeholder="Все бренды"
+        clearable
+        style="width: 200px; margin-left: 10px"
+      >
+        <el-option label="Все бренды" value="" />
+        <el-option v-for="brand in uniqueBrands" :key="brand" :label="brand" :value="brand" />
+      </el-select>
+      <el-button
+        v-if="filterBrand"
+        @click="filterBrand = ''"
+        size="small"
+        style="margin-left: 10px"
+      >
+        Сбросить
+      </el-button>
+    </div>
+
     <div v-if="user.isMechanic" class="self-end">
       <el-button type="success" @click="openDialogHandler"> Добавить запись </el-button>
     </div>
 
-    <WikiTable :items="tableData" :columns="columns">
+    <WikiTable :items="filteredItems" :columns="columns">
       <template v-if="user.isMechanic" #actions="{ item }">
-        <el-button type="success" size="small" @click="openDialogHandler(item)">
+        <el-button type="success" size="small" @click="handleEditClick($event, item)">
           Редактировать
         </el-button>
-        <el-button type="danger" size="small" @click="deleteItem(item)">Удалить</el-button>
+        <el-button type="danger" size="small" @click="handleDeleteClick($event, item)"
+          >Удалить</el-button
+        >
       </template>
     </WikiTable>
 
@@ -79,4 +135,14 @@ onMounted(fetchData)
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.filter-item {
+  display: flex;
+  align-items: center;
+}
+
+.filter-item label {
+  font-weight: 500;
+  color: #606266;
+}
+</style>
