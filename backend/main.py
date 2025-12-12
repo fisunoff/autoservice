@@ -8,7 +8,7 @@ from endpoints import (
     pricelist,
     workers,
     wiki,
-    order,
+    order, leftovers,
 )
 
 app = FastAPI(
@@ -29,3 +29,4 @@ app.include_router(pricelist.price_list_router, prefix='/price_list')
 app.include_router(workers.workers_router, prefix='/worker')
 app.include_router(wiki.wiki_router, prefix='/wiki')
 app.include_router(order.order_router, prefix='/order')
+app.include_router(leftovers.leftovers_router, prefix='/leftovers')
