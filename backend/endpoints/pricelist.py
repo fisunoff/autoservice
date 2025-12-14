@@ -62,6 +62,7 @@ async def create_position(
     await db.refresh(position)
     return position
 
+
 @price_list_router.put('/{_id}', response_model=PositionData)
 async def update_position(
         _id: int,
@@ -73,14 +74,21 @@ async def update_position(
     Изменить позицию в прайс-листе. Только для администратора.
     """
     stmt = select(Position).where(Position.id == _id).limit(1)
-    result = (await db.execute(stmt)).scalars().first()
-    if not result:
+    position = (await db.execute(stmt)).scalars().first()
+    if not position:
         raise HTTPException(status_code=404, detail='Позиция прейскуранта не найдена')
-    result = Position(**data.model_dump())
-    db.add(result)
+
+    # Обновляем объект данными из запроса
+    update_data = data.model_dump()
+    update_data['id'] = _id  # Убедимся, что ID не меняется
+
+    # Создаем обновленный объект и мерджим с существующим
+    updated_position = Position(**update_data)
+    merged_position = await db.merge(updated_position)
+
     await db.commit()
-    await db.refresh(result)
-    return result
+    await db.refresh(merged_position)
+    return merged_position
 
 @price_list_router.delete('/{_id}', response_model=PositionData)
 async def delete_position(
