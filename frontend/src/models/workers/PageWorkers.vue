@@ -5,6 +5,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatDateToRu } from '@/api/formatServices.ts'
 import WorkersTable from './WorkersTable.vue'
 import HireWorkerDialog from '@/models/workers/HireWorkerDialog.vue'
+import { useUserStore } from '@/stores/userStore.ts'
 export interface Worker {
   id: number
   number: number
@@ -27,7 +28,7 @@ export interface NewWorkerData {
 
 const workersData = reactive<Worker[]>([])
 const dialogVisible = ref(false)
-
+const userSctore = useUserStore()
 const fetchWorkers = async () => {
   try {
     const response = await api.get('/worker')
@@ -87,11 +88,11 @@ onMounted(fetchWorkers)
 
 <template>
   <div class="flex flex-col gap-4 p-10">
-    <div class="self-end">
+    <div v-if="userSctore.isAdmin" class="self-end">
       <el-button type="success" @click="dialogVisible = true"> Принять на работу </el-button>
     </div>
 
-    <WorkersTable :items="workersData">
+    <WorkersTable :show-actions="userSctore.isAdmin" :items="workersData">
       <template #actions="{ item }">
         <el-button v-if="!item.fireDate" type="danger" size="small" @click="handleFireWorker(item)">
           Уволить
