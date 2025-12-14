@@ -1,10 +1,12 @@
 from sqlalchemy import Column, Integer, String, Boolean, Date
 
 from models.base import Base
+from sqlalchemy.orm import relationship
 
 __all__ = [
     'Profile',
 ]
+
 
 class Profile(Base):
     __tablename__ = 'profile'
@@ -20,3 +22,5 @@ class Profile(Base):
     fire_date = Column(Date, nullable=True)
     login = Column(String(255), nullable=False, unique=True)
     hashed_password = Column(String, nullable=False)
+    orders_by_mechanic = relationship('Order',  foreign_keys='[Order.responsible_mechanic_id]', back_populates='responsible_mechanic')
+    orders_by_admin = relationship('Order', foreign_keys='[Order.responsible_admin_id]', back_populates='responsible_admin')

@@ -14,3 +14,4 @@ class Article(models.Base):
     brands = Column(ARRAY(String), nullable=False)
     syndrome = Column(Text)
     solution = Column(Text)
+    components = Column(ARRAY(String), nullable=True)
