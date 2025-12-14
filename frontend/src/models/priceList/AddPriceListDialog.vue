@@ -13,6 +13,7 @@ interface NewPriceListItem {
 
 const props = defineProps<{
   visible: boolean
+  isWork: boolean
 }>()
 const emit = defineEmits(['update:visible', 'save'])
 
@@ -34,7 +35,12 @@ watch(
     }
   },
 )
-
+watch(
+  () => props.isWork,
+  (newValue) => {
+    newItemForm.is_work = newValue
+  },
+)
 const handleSaveClick = () => {
   if (!newItemForm.title) {
     ElMessage.warning('Пожалуйста, введите наименование.')
@@ -52,7 +58,7 @@ const handleClose = () => {
 <template>
   <el-dialog
     :model-value="visible"
-    title="Добавить новую позицию в прейскурант"
+    :title="`Добавить ${isWork ? 'работу' : 'товар'} в прейскурант`"
     width="500px"
     @close="handleClose"
   >
@@ -73,9 +79,7 @@ const handleClose = () => {
           controls-position="right"
         />
       </el-form-item>
-      <el-form-item label="Это работа?">
-        <el-checkbox v-model="newItemForm.is_work" />
-      </el-form-item>
+
       <el-form-item label="Используется">
         <el-checkbox v-model="newItemForm.using" />
       </el-form-item>
