@@ -205,7 +205,7 @@ const clearFilter = () => {
       <el-button type="success" @click="handleAddClick"> Добавить запись </el-button>
     </div>
 
-    <WikiTable :items="filteredItems" :columns="columns">
+    <WikiTable :show-actions="user.isMechanic" :items="filteredItems" :columns="columns">
       <template v-if="user.isMechanic" #actions="{ item }">
         <el-button type="success" size="small" @click="handleEditClick($event, item)">
           Редактировать

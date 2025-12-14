@@ -1,11 +1,17 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import type { WikiItem } from './WikiPage.vue'
 
-defineProps<{
-  items: WikiItem[]
-  columns: { label: string; key: string }[]
-}>()
+withDefaults(
+  defineProps<{
+    items: WikiItem[]
+    columns: { label: string; key: string }[]
+    showActions?: boolean
+  }>(),
+  {
+    showActions: true,
+  },
+)
 
 const viewDialogVisible = ref(false)
 const editedItem = ref<WikiItem | null>(null)
@@ -19,11 +25,6 @@ const handleCloseDialog = () => {
   viewDialogVisible.value = false
   editedItem.value = null
 }
-
-const formattedBrands = computed(() => {
-  if (!editedItem.value?.brands) return ''
-  return editedItem.value.brands.join(', ')
-})
 </script>
 
 <template>
@@ -40,9 +41,16 @@ const formattedBrands = computed(() => {
         :key="column.key"
         :prop="column.key"
         :label="column.label"
-      />
+      >
+        <template #default="scope">
+          <span v-if="Array.isArray(scope.row[column.key])">
+            {{ scope.row[column.key].join(', ') }}
+          </span>
+          <span v-else>{{ scope.row[column.key] }}</span>
+        </template>
+      </el-table-column>
 
-      <el-table-column label="" width="220">
+      <el-table-column v-if="showActions" label="" width="220">
         <template #default="{ row }">
           <slot name="actions" :item="row"></slot>
         </template>
@@ -73,7 +81,7 @@ const formattedBrands = computed(() => {
         <div class="view-section">
           <h3 class="view-section-title">Бренды автомобилей</h3>
           <div class="view-section-content">
-            <div v-if="formattedBrands" class="brands-container">
+            <div v-if="editedItem.brands?.length" class="brands-container">
               <el-tag
                 v-for="(brand, index) in editedItem.brands"
                 :key="index"
