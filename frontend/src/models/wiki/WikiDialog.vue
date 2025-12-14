@@ -91,7 +91,6 @@ const title = computed(() =>
           filterable
           allow-create
           default-first-option
-          placeholder="Выберите или введите агрегат (Двигатель, КПП...)"
           style="width: 100%"
         >
           <el-option v-for="comp in componentsList" :key="comp" :label="comp" :value="comp" />
