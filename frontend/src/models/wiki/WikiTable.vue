@@ -87,6 +87,24 @@ const formattedBrands = computed(() => {
             <div v-else class="empty-field">Не указаны</div>
           </div>
         </div>
+
+        <div class="view-section">
+          <h3 class="view-section-title">Агрегаты</h3>
+          <div class="view-section-content">
+            <div v-if="editedItem.components?.length" class="brands-container">
+              <el-tag
+                v-for="(comp, index) in editedItem.components"
+                :key="index"
+                type="warning"
+                size="small"
+                class="brand-tag"
+              >
+                {{ comp }}
+              </el-tag>
+            </div>
+            <div v-else class="empty-field">Не указаны</div>
+          </div>
+        </div>
       </div>
     </el-dialog>
   </div>
@@ -98,22 +116,15 @@ const formattedBrands = computed(() => {
   overflow-y: auto;
   padding-right: 10px;
 }
-
 .view-section {
   margin-bottom: 24px;
 }
-
-.view-section:last-child {
-  margin-bottom: 0;
-}
-
 .view-section-title {
   margin: 0 0 8px 0;
   font-size: 16px;
   font-weight: 600;
   color: #303133;
 }
-
 .view-section-content {
   padding: 12px;
   background-color: #f8f9fa;
@@ -124,18 +135,15 @@ const formattedBrands = computed(() => {
   color: #606266;
   min-height: 40px;
 }
-
 .brands-container {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
-
 .brand-tag {
   margin-right: 4px;
   margin-bottom: 4px;
 }
-
 .empty-field {
   color: #909399;
   font-style: italic;

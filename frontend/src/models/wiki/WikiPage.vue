@@ -11,6 +11,7 @@ export interface WikiItem {
   syndrome: string
   solution: string
   brands: string[]
+  components?: string[] // Новое поле
 }
 
 const user = useUserStore()
@@ -21,6 +22,7 @@ const columns = [
   { label: 'Проблема', key: 'syndrome' },
   { label: 'Решение', key: 'solution' },
   { label: 'Бренд автомобиля', key: 'brands' },
+  { label: 'Агрегаты', key: 'components' },
 ]
 
 const fetchData = async () => {
@@ -44,11 +46,11 @@ const saveHandler = async (item: Partial<WikiItem>) => {
     if (id == null) await api.post('/wiki', item)
     else await api.put(`/wiki/${id}`, item)
     dialogVisible.value = false
-    ElMessage.success('Позиция успешно добавлена!')
+    ElMessage.success('Позиция успешно сохранена!')
     await fetchData()
   } catch (error) {
-    console.error('Ошибка при добавлении позиции:', error)
-    ElMessage.error('Произошла ошибка при добавлении позиции.')
+    console.error('Ошибка при сохранении позиции:', error)
+    ElMessage.error('Произошла ошибка при сохранении позиции.')
   }
 }
 
@@ -62,17 +64,28 @@ const deleteItem = async (item: WikiItem) => {
 }
 
 const filterBrand = ref<string>('')
+const filterComponent = ref<string>('') // Новый фильтр
+const searchQuery = ref<string>('')
+
 const uniqueBrands = computed<string[]>(() => {
   const brands = new Set<string>()
   tableData.forEach((item) => {
-    item.brands.forEach((brand) => {
+    item.brands?.forEach((brand) => {
       if (brand.trim()) brands.add(brand.trim())
     })
   })
   return Array.from(brands).sort()
 })
 
-const searchQuery = ref<string>('')
+const uniqueComponents = computed<string[]>(() => {
+  const components = new Set<string>()
+  tableData.forEach((item) => {
+    item.components?.forEach((comp) => {
+      if (comp.trim()) components.add(comp.trim())
+    })
+  })
+  return Array.from(components).sort()
+})
 
 const filteredItems = computed(() => {
   let result = [...tableData]
@@ -86,13 +99,23 @@ const filteredItems = computed(() => {
     })
   }
 
+  if (filterComponent.value) {
+    result = result.filter((item) => {
+      if (!item.components) return false
+      return item.components.some((comp) =>
+        comp.toLowerCase().includes(filterComponent.value.toLowerCase()),
+      )
+    })
+  }
+
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
     result = result.filter((item) => {
       return (
         item.syndrome.toLowerCase().includes(query) ||
         item.solution.toLowerCase().includes(query) ||
-        (item.brands && item.brands.some((brand) => brand.toLowerCase().includes(query)))
+        (item.brands && item.brands.some((brand) => brand.toLowerCase().includes(query))) ||
+        (item.components && item.components.some((comp) => comp.toLowerCase().includes(query)))
       )
     })
   }
@@ -116,6 +139,11 @@ const handleAddClick = (event: MouseEvent) => {
 }
 
 onMounted(fetchData)
+
+const clearFilter = () => {
+  filterBrand.value = ''
+  filterComponent.value = ''
+}
 </script>
 
 <template>
@@ -150,13 +178,25 @@ onMounted(fetchData)
           <el-option label="Все бренды" value="" />
           <el-option v-for="brand in uniqueBrands" :key="brand" :label="brand" :value="brand" />
         </el-select>
+
+        <label style="margin-left: 20px">Фильтр по агрегату:</label>
+        <el-select
+          v-model="filterComponent"
+          placeholder="Все агрегаты"
+          clearable
+          style="width: 200px; margin-left: 10px"
+        >
+          <el-option label="Все агрегаты" value="" />
+          <el-option v-for="comp in uniqueComponents" :key="comp" :label="comp" :value="comp" />
+        </el-select>
+
         <el-button
-          v-if="filterBrand"
-          @click="filterBrand = ''"
+          v-if="filterBrand || filterComponent"
+          @click="clearFilter"
           size="small"
           style="margin-left: 10px"
         >
-          Сбросить фильтр
+          Сбросить фильтры
         </el-button>
       </div>
     </div>
@@ -184,6 +224,7 @@ onMounted(fetchData)
 .filter-item {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .filter-item label {

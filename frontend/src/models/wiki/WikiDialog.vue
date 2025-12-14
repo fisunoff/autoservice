@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import { computed, reactive, watch } from 'vue'
+import { computed, reactive, watch, ref } from 'vue'
 import type { WikiItem } from './WikiPage.vue'
 import api from '@/api/api'
-import type { Car } from '../workOrder/PageWorkOrdersList.vue'
-import { ref } from 'vue'
 
 type NewWiki = Partial<WikiItem>
 
@@ -17,25 +15,33 @@ const defaultNewItem: NewWiki = {
   syndrome: '',
   solution: '',
   brands: [],
+  components: [],
 }
+
 const newItemForm = ref<NewWiki>({})
-const carsList = reactive<Car[]>([])
-const fetchBrands = async () => {
-  const cars = await api.options(`/wiki`)
-  carsList.splice(0, carsList.length, ...cars.data.options.brands)
+const carsList = reactive<string[]>([])
+const componentsList = reactive<string[]>([])
+
+const fetchOptions = async () => {
+  try {
+    const response = await api.options(`/wiki`)
+    carsList.splice(0, carsList.length, ...(response.data.options?.brands || []))
+    componentsList.splice(0, componentsList.length, ...(response.data.options?.components || []))
+  } catch (e) {
+    console.error(e)
+  }
 }
 
 watch(
   () => props.visible,
   async (newValue) => {
-    await fetchBrands()
     if (newValue) {
+      await fetchOptions()
       if (props.item) {
-        newItemForm.value = {
-          ...props.item,
-        }
+        newItemForm.value = JSON.parse(JSON.stringify(props.item)) // Глубокая копия
+        if (!newItemForm.value.components) newItemForm.value.components = []
       } else {
-        newItemForm.value = { ...defaultNewItem }
+        newItemForm.value = JSON.parse(JSON.stringify(defaultNewItem))
       }
     }
   },
@@ -60,9 +66,11 @@ const title = computed(() =>
       <el-form-item label="Проблема">
         <el-input v-model="newItemForm.syndrome" />
       </el-form-item>
+
       <el-form-item label="Решение">
         <el-input v-model="newItemForm.solution" type="textarea" :rows="3" />
       </el-form-item>
+
       <el-form-item label="Бренд автомобиля">
         <el-select
           v-model="newItemForm.brands"
@@ -70,13 +78,27 @@ const title = computed(() =>
           filterable
           allow-create
           default-first-option
-          placeholder=""
+          placeholder="Выберите или введите бренд"
           style="width: 100%"
         >
           <el-option v-for="brand in carsList" :key="brand" :label="brand" :value="brand" />
         </el-select>
       </el-form-item>
+      <el-form-item label="Агрегаты">
+        <el-select
+          v-model="newItemForm.components"
+          multiple
+          filterable
+          allow-create
+          default-first-option
+          placeholder="Выберите или введите агрегат (Двигатель, КПП...)"
+          style="width: 100%"
+        >
+          <el-option v-for="comp in componentsList" :key="comp" :label="comp" :value="comp" />
+        </el-select>
+      </el-form-item>
     </el-form>
+
     <template #footer>
       <span class="dialog-footer">
         <el-button @click="handleClose">Отмена</el-button>
