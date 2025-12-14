@@ -4,6 +4,7 @@ import api from '@/api/api'
 import { ElMessage } from 'element-plus'
 import PriceListTable from '@/models/priceList/PriceListTable.vue'
 import AddPriceListDialog from '@/models/priceList/AddPriceListDialog.vue'
+import { useUserStore } from '@/stores/userStore.ts'
 
 export interface PriceListItem {
   id: number
@@ -23,7 +24,7 @@ interface NewPriceListItem {
   is_work: boolean
   using: boolean
 }
-
+const userStore = useUserStore()
 const tableData = reactive<PriceListItem[]>([])
 const dialogVisible = ref(false)
 const columns = [
@@ -76,6 +77,20 @@ const openAddTovar = () => {
   isWork.value = false
   dialogVisible.value = true
 }
+const toArchive = async (item: PriceListItem) => {
+  const id = item.id
+  await api.put(`/price_list/${id}`, {
+    id: item.id,
+    number: item.number,
+    title: item.title,
+    unit: item.unit,
+    price: item.price,
+    in_stock_quantity: item.inStrokeQuantity,
+    is_work: item.isWork,
+    using: false,
+  })
+  await fetchData()
+}
 onMounted(fetchData)
 </script>
 
@@ -88,10 +103,13 @@ onMounted(fetchData)
 
     <PriceListTable :items="tableData" :columns="columns">
       <template #actions="{ item }">
-        <el-button v-if="item.isUsing && item.inStrokeQuantity > 0" type="success" size="small">
-          Использовать
-        </el-button>
-        <el-button type="danger" size="small">В архив</el-button>
+        <el-button
+          v-if="item.isUsing && userStore.isAdmin"
+          type="danger"
+          size="small"
+          @click="toArchive(item)"
+          >В архив</el-button
+        >
       </template>
     </PriceListTable>
 
