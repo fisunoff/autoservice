@@ -70,14 +70,32 @@ const uniqueBrands = computed<string[]>(() => {
   return Array.from(brands).sort()
 })
 
+const searchQuery = ref<string>('')
+
 const filteredItems = computed(() => {
-  if (!filterBrand.value) return tableData
-  return tableData.filter((item) => {
-    if (!item.brands) return false
-    return item.brands.some((brand) =>
-      brand.toLowerCase().includes(filterBrand.value.toLowerCase()),
-    )
-  })
+  let result = [...tableData]
+
+  if (filterBrand.value) {
+    result = result.filter((item) => {
+      if (!item.brands) return false
+      return item.brands.some((brand) =>
+        brand.toLowerCase().includes(filterBrand.value.toLowerCase()),
+      )
+    })
+  }
+
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase()
+    result = result.filter((item) => {
+      return (
+        item.syndrome.toLowerCase().includes(query) ||
+        item.solution.toLowerCase().includes(query) ||
+        (item.brands && item.brands.some((brand) => brand.toLowerCase().includes(query)))
+      )
+    })
+  }
+
+  return result
 })
 
 const handleEditClick = (event: MouseEvent, item: WikiItem) => {
@@ -90,34 +108,59 @@ const handleDeleteClick = (event: MouseEvent, item: WikiItem) => {
   deleteItem(item)
 }
 
+const handleAddClick = (event: MouseEvent) => {
+  event.stopPropagation()
+  openDialogHandler()
+}
+
 onMounted(fetchData)
 </script>
 
 <template>
   <div class="flex flex-col gap-4 p-10">
-    <div class="filter-item">
-      <label>Фильтр по бренду:</label>
-      <el-select
-        v-model="filterBrand"
-        placeholder="Все бренды"
-        clearable
-        style="width: 200px; margin-left: 10px"
-      >
-        <el-option label="Все бренды" value="" />
-        <el-option v-for="brand in uniqueBrands" :key="brand" :label="brand" :value="brand" />
-      </el-select>
-      <el-button
-        v-if="filterBrand"
-        @click="filterBrand = ''"
-        size="small"
-        style="margin-left: 10px"
-      >
-        Сбросить
-      </el-button>
+    <div class="flex flex-col gap-4">
+      <div class="filter-item">
+        <label>Поиск по записям:</label>
+        <el-input
+          v-model="searchQuery"
+          placeholder="Введите текст для поиска"
+          clearable
+          style="width: 300px; margin-left: 10px"
+        />
+        <el-button
+          v-if="searchQuery"
+          @click="searchQuery = ''"
+          size="small"
+          style="margin-left: 10px"
+        >
+          Сбросить поиск
+        </el-button>
+      </div>
+
+      <div class="filter-item">
+        <label>Фильтр по бренду:</label>
+        <el-select
+          v-model="filterBrand"
+          placeholder="Все бренды"
+          clearable
+          style="width: 200px; margin-left: 10px"
+        >
+          <el-option label="Все бренды" value="" />
+          <el-option v-for="brand in uniqueBrands" :key="brand" :label="brand" :value="brand" />
+        </el-select>
+        <el-button
+          v-if="filterBrand"
+          @click="filterBrand = ''"
+          size="small"
+          style="margin-left: 10px"
+        >
+          Сбросить фильтр
+        </el-button>
+      </div>
     </div>
 
     <div v-if="user.isMechanic" class="self-end">
-      <el-button type="success" @click="openDialogHandler"> Добавить запись </el-button>
+      <el-button type="success" @click="handleAddClick"> Добавить запись </el-button>
     </div>
 
     <WikiTable :items="filteredItems" :columns="columns">
@@ -144,5 +187,6 @@ onMounted(fetchData)
 .filter-item label {
   font-weight: 500;
   color: #606266;
+  min-width: 140px;
 }
 </style>

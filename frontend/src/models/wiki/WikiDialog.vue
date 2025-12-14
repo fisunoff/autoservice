@@ -67,7 +67,7 @@ const title = computed(() =>
 </script>
 
 <template>
-  <el-dialog :model-value="visible" :title="title" width="500px" @close="handleClose">
+  <el-dialog :model-value="visible" :title="title" width="800px" @close="handleClose">
     <el-form :model="newItemForm" label-width="150px">
       <el-form-item label="Проблема">
         <el-input v-model="newItemForm.syndrome" />
