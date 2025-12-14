@@ -34,6 +34,7 @@ const columns = [
   { label: 'В наличии', key: 'inStrokeQuantity' },
 ]
 
+const isWork = ref(false)
 const fetchData = async () => {
   try {
     const response = await api.get('/price_list')
@@ -67,14 +68,22 @@ const handleAddItem = async (newItem: NewPriceListItem) => {
     ElMessage.error('Произошла ошибка при добавлении позиции.')
   }
 }
-
+const openAddWork = () => {
+  isWork.value = true
+  dialogVisible.value = true
+}
+const openAddTovar = () => {
+  isWork.value = false
+  dialogVisible.value = true
+}
 onMounted(fetchData)
 </script>
 
 <template>
   <div class="flex flex-col gap-4 p-10">
-    <div class="self-end">
-      <el-button type="success" @click="dialogVisible = true"> Добавить позицию </el-button>
+    <div class="self-end flex gap-3">
+      <el-button type="success" @click="openAddTovar"> Добавить товар </el-button>
+      <el-button type="success" @click="openAddWork"> Добавить работу </el-button>
     </div>
 
     <PriceListTable :items="tableData" :columns="columns">
@@ -86,7 +95,7 @@ onMounted(fetchData)
       </template>
     </PriceListTable>
 
-    <AddPriceListDialog v-model:visible="dialogVisible" @save="handleAddItem" />
+    <AddPriceListDialog v-model:visible="dialogVisible" :is-work="isWork" @save="handleAddItem" />
   </div>
 </template>
 
