@@ -40,7 +40,9 @@ const openDialogHandler = (item?: WikiItem) => {
 
 const saveHandler = async (item: Partial<WikiItem>) => {
   try {
-    await api.post('/wiki', item)
+    const id = item.id
+    if (id == null) await api.post('/wiki', item)
+    else await api.put(`/wiki/${id}`, item)
     dialogVisible.value = false
     ElMessage.success('Позиция успешно добавлена!')
     await fetchData()
