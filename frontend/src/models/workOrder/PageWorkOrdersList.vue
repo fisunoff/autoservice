@@ -5,6 +5,7 @@ import { ElMessage } from 'element-plus'
 import { formatDateToRu } from '@/api/formatServices.ts'
 import OrdersTable from './WorkOrdersTable.vue'
 import CreateOrderDialog from './CreateOrderDialog.vue'
+import { useUserStore } from '@/stores/userStore.ts'
 
 export interface WorkOrderItem {
   id: number
@@ -37,7 +38,7 @@ const tableData = reactive<WorkOrderItem[]>([])
 const customersList = reactive<Customer[]>([])
 const carsList = reactive<Car[]>([])
 const dialogVisible = ref(false)
-
+const userStore = useUserStore()
 const columns = [
   { label: '№', key: 'number' },
   { label: 'Автомобиль', key: 'car' },
@@ -95,7 +96,9 @@ onMounted(fetchData)
 <template>
   <div class="flex flex-col gap-4 p-10">
     <div class="self-end">
-      <el-button type="success" @click="dialogVisible = true"> Создать заказ-наряд </el-button>
+      <el-button v-if="userStore.isAdmin" type="success" @click="dialogVisible = true">
+        Создать заказ-наряд
+      </el-button>
     </div>
 
     <OrdersTable :items="tableData" :columns="columns">

@@ -6,15 +6,27 @@ import { ElMessage } from 'element-plus'
 import OrderItemsTable from './OrderItemsTable.vue'
 import AddOrderItemDialog from './AddOrderItemDialog.vue'
 
+interface Worker {
+  id: number
+  name: string
+  surname: string
+  patronymic: string
+  is_admin: boolean
+  is_mechanic: boolean
+}
+
 interface OrderDetail {
   id: number
   customer: { name: string; surname: string; patronymic: string; phone: string }
   car: { brand: string; model: string; state_number: string; vin: string; year: number }
   details: OrderItem[]
   works: OrderItem[]
-  paid_date: string;
-  closed_date: string;
+  paid_date: string | null
+  closed_date: string | null
+  responsible_mechanic_id: number | null
+  responsible_admin_id: number | null
 }
+
 interface OrderItem {
   position: { id: number; title: string; unit: string }
   price: number
@@ -32,6 +44,10 @@ const orderId = Number(route.params.id)
 const order = ref<OrderDetail | null>(null)
 const priceListWorks = ref<PriceListItem[]>([])
 const priceListDetails = ref<PriceListItem[]>([])
+
+const admins = ref<Worker[]>([])
+const mechanics = ref<Worker[]>([])
+
 const activeTab = ref('works')
 const isDialogVisible = ref(false)
 const dialogMode = ref<'add' | 'edit'>('add')
@@ -54,6 +70,14 @@ const totalCost = computed(() => {
   return worksCost + detailsCost
 })
 
+const isOrderFinished = computed(() => {
+  return !!(order.value?.paid_date || order.value?.closed_date)
+})
+
+const formatWorkerName = (worker: Worker) => {
+  return `${worker.surname} ${worker.name} ${worker.patronymic}`
+}
+
 const fetchOrderData = async () => {
   try {
     const { data } = await api.get(`/order/${orderId}`)
@@ -61,6 +85,18 @@ const fetchOrderData = async () => {
   } catch (error) {
     ElMessage.error('Не удалось загрузить данные заказа.')
     console.error(error)
+  }
+}
+
+const fetchWorkers = async () => {
+  try {
+    const { data } = await api.get('/worker/')
+    const allWorkers: Worker[] = data.items || data
+
+    admins.value = allWorkers.filter((w) => w.is_admin)
+    mechanics.value = allWorkers.filter((w) => w.is_mechanic)
+  } catch (error) {
+    console.error('Ошибка загрузки сотрудников:', error)
   }
 }
 
@@ -74,6 +110,28 @@ const fetchPriceLists = async () => {
     priceListDetails.value = detailsRes.data
   } catch (error) {
     ElMessage.error('Не удалось загрузить прайс-листы.')
+    console.error(error)
+  }
+}
+
+const setResponsibleAdmin = async (adminId: number) => {
+  try {
+    await api.post(`/order/${orderId}/set_responsible_admin/${adminId}/`)
+    ElMessage.success('Администратор назначен')
+    await fetchOrderData()
+  } catch (error) {
+    ElMessage.error('Ошибка назначения администратора')
+    console.error(error)
+  }
+}
+
+const setResponsibleMechanic = async (mechanicId: number) => {
+  try {
+    await api.post(`/order/${orderId}/set_responsible_mechanic/${mechanicId}/`)
+    ElMessage.success('Механик назначен')
+    await fetchOrderData()
+  } catch (error) {
+    ElMessage.error('Ошибка назначения механика')
     console.error(error)
   }
 }
@@ -116,16 +174,28 @@ const handleSave = async (payload: { itemId?: number; quantity: number; price?: 
   }
 }
 
-const payOrder = async()=>{
-  await api.post(`/order/${orderId}/set_paid`)
-  await fetchOrderData();
+const payOrder = async () => {
+  try {
+    await api.post(`/order/${orderId}/set_paid`)
+    ElMessage.success('Статус обновлен')
+    await fetchOrderData()
+  } catch (e) {
+    console.error(e)
+  }
 }
 
-const closeOrder = async () =>{
-  await api.post(`/order/${orderId}/close`)
-  await fetchOrderData();
+const closeOrder = async () => {
+  try {
+    await api.post(`/order/${orderId}/close`)
+    ElMessage.success('Заказ закрыт')
+    await fetchOrderData()
+  } catch (e) {
+    console.error(e)
+  }
 }
+
 onMounted(async () => {
+  await fetchWorkers()
   await fetchOrderData()
   await fetchPriceLists()
 })
@@ -136,27 +206,78 @@ onMounted(async () => {
     <el-card>
       <template #header>
         <div class="flex justify-between items-center">
-          <span>Заказ-наряд №{{ order.id }}</span>
+          <div class="flex items-center gap-3">
+            <span class="text-lg">Заказ-наряд №{{ order.id }}</span>
+            <el-tag v-if="order.closed_date" type="info">Закрыт</el-tag>
+            <el-tag v-else-if="order.paid_date" type="success">Оплачен</el-tag>
+            <el-tag v-else type="warning">В работе</el-tag>
+          </div>
           <span class="font-bold text-xl">Общая стоимость: {{ totalCost.toFixed(2) }} ₽</span>
         </div>
       </template>
-      <div class="grid grid-cols-2 gap-4">
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
-          <h3 class="font-semibold mb-2">Клиент</h3>
-          <p>
+          <h3 class="font-semibold mb-2 text-gray-500 uppercase text-xs">Клиент</h3>
+          <p class="font-medium">
             {{ order.customer.surname }} {{ order.customer.name }} {{ order.customer.patronymic }}
           </p>
-          <p>Телефон: {{ order.customer.phone }}</p>
+          <p class="text-sm text-gray-600">Телефон: {{ order.customer.phone }}</p>
         </div>
+
         <div>
-          <h3 class="font-semibold mb-2">Автомобиль</h3>
-          <p>{{ order.car.brand }} {{ order.car.model }} ({{ order.car.year }})</p>
-          <p>Гос. номер: {{ order.car.state_number }}</p>
-          <p>VIN: {{ order.car.vin }}</p>
+          <h3 class="font-semibold mb-2 text-gray-500 uppercase text-xs">Автомобиль</h3>
+          <p class="font-medium">
+            {{ order.car.brand }} {{ order.car.model }} ({{ order.car.year }})
+          </p>
+          <p class="text-sm text-gray-600">Гос. номер: {{ order.car.state_number }}</p>
+          <p class="text-sm text-gray-600">VIN: {{ order.car.vin }}</p>
         </div>
-        <div class="col-start-2 flex justify-end gap-2">
-          <el-button v-if="!order.paid_date && !order.closed_date" type="success" @click="payOrder">Оплачен</el-button>
-          <el-button v-if="order.paid_date && !order.closed_date" type="danger" @click="closeOrder">Закрыть</el-button>
+
+        <div class="flex flex-col gap-4">
+          <div>
+            <h3 class="font-semibold mb-1 text-gray-500 uppercase text-xs">Администратор</h3>
+            <el-select
+              v-model="order.responsible_admin_id"
+              placeholder="Не назначен"
+              class="w-full"
+              :disabled="isOrderFinished"
+              @change="setResponsibleAdmin"
+            >
+              <el-option
+                v-for="admin in admins"
+                :key="admin.id"
+                :label="formatWorkerName(admin)"
+                :value="admin.id"
+              />
+            </el-select>
+          </div>
+          <div>
+            <h3 class="font-semibold mb-1 text-gray-500 uppercase text-xs">Механик</h3>
+            <el-select
+              v-model="order.responsible_mechanic_id"
+              placeholder="Не назначен"
+              class="w-full"
+              :disabled="isOrderFinished"
+              @change="setResponsibleMechanic"
+            >
+              <el-option
+                v-for="mech in mechanics"
+                :key="mech.id"
+                :label="formatWorkerName(mech)"
+                :value="mech.id"
+              />
+            </el-select>
+          </div>
+        </div>
+
+        <div class="md:col-span-3 flex justify-end gap-2 border-t pt-4 mt-2">
+          <el-button v-if="!order.paid_date && !order.closed_date" type="success" @click="payOrder">
+            Оплачен
+          </el-button>
+          <el-button v-if="order.paid_date && !order.closed_date" type="danger" @click="closeOrder">
+            Закрыть
+          </el-button>
         </div>
       </div>
     </el-card>
@@ -167,18 +288,29 @@ onMounted(async () => {
           <el-radio-button label="works">Работы</el-radio-button>
           <el-radio-button label="details">Запчасти</el-radio-button>
         </el-radio-group>
-        <el-button v-if="!order.paid_date && !order.closed_date" type="primary" @click="openAddDialog">
+        <el-button
+          v-if="!order.paid_date && !order.closed_date"
+          type="primary"
+          @click="openAddDialog"
+        >
           Добавить {{ activeTab === 'works' ? 'работу' : 'запчасть' }}
         </el-button>
       </div>
 
-      <OrderItemsTable v-if="activeTab === 'works'" :items="order.works" @edit="openEditDialog" />
+      <OrderItemsTable
+        v-if="activeTab === 'works'"
+        :items="order.works"
+        :readonly="isOrderFinished"
+        @edit="openEditDialog"
+      />
       <OrderItemsTable
         v-if="activeTab === 'details'"
         :items="order.details"
+        :readonly="isOrderFinished"
         @edit="openEditDialog"
       />
     </el-card>
+
     <AddOrderItemDialog
       v-model:visible="isDialogVisible"
       :mode="dialogMode"
@@ -189,5 +321,5 @@ onMounted(async () => {
       @save="handleSave"
     />
   </div>
-  <div v-else class="p-10">Загрузка данных...</div>
+  <div v-else class="p-10 text-center">Загрузка данных...</div>
 </template>
