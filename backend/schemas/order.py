@@ -24,6 +24,8 @@ class OrderReadData(pydantic.BaseModel):
     paid_date: datetime.date | None
     opened_date: datetime.date
     closed_date: datetime.date | None
+    responsible_mechanic_id: int | None = None
+    responsible_admin_id: int | None = None
 
 
 class DetailUsageForOrder(pydantic.BaseModel):

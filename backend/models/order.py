@@ -15,6 +15,10 @@ class Order(models.Base):
     customer = relationship('Customer', back_populates='orders')
     car_id = mapped_column(ForeignKey('car.id', ondelete='RESTRICT'), nullable=False)
     car = relationship('Car', back_populates='orders')
+    responsible_mechanic_id = mapped_column(ForeignKey('profile.id', ondelete='RESTRICT'), nullable=True)
+    responsible_mechanic = relationship('Profile', back_populates='orders_by_mechanic', foreign_keys=[responsible_mechanic_id])
+    responsible_admin_id = mapped_column(ForeignKey('profile.id', ondelete='RESTRICT'), nullable=True)
+    responsible_admin = relationship('Profile', back_populates='orders_by_admin', foreign_keys=[responsible_admin_id])
     car_received = Column(Boolean, nullable=False)  # получен
     car_given_out = Column(Boolean, nullable=False)  # выдан
     paid_date = Column(Date, nullable=True)  # дата оплаты

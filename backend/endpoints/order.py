@@ -8,7 +8,7 @@ from sqlalchemy.orm import selectinload
 from starlette import status
 
 import models
-from models import get_db, Order, DetailUsage, WorkUsage
+from models import get_db, Order, DetailUsage, WorkUsage, Profile
 from schemas.order import OrderReadData, OrderCreate, OrderDetailData
 from utils.jwt_token import verify_token, verify_admin_role
 
@@ -62,6 +62,7 @@ async def get_order(
         raise HTTPException(status.HTTP_404_NOT_FOUND)
     return order
 
+
 @order_router.post('/{pk}/set_paid', response_model=OrderDetailData)
 async def set_paid(
         pk: int,
@@ -81,6 +82,69 @@ async def set_paid(
     await db.commit()
     return order
 
+
+@order_router.post('/{pk}/set_responsible_admin/{admin_pk}/', response_model=OrderDetailData)
+async def set_responsible_admin(
+        pk: int,
+        admin_pk: int,
+        db: AsyncSession = Depends(get_db),
+        _token: str = Depends(verify_admin_role),
+):
+    """
+    Назначить ответственного администратора. Только для администратора.
+    """
+    order = await get_prefetched_order(pk, db)
+    if not order:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+    admin = await db.get(Profile, admin_pk)
+    if not admin:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+    if not admin.is_admin:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail='Назначаемый пользователь не обладает правами администратора',
+        )
+    if not admin.is_active:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail='Назначаемый пользователь не активен',
+        )
+    order.responsible_admin_id = admin.id
+    db.add(order)
+    await db.commit()
+    return order
+
+
+@order_router.post('/{pk}/set_responsible_mechanic/{mechanic_pk}/', response_model=OrderDetailData)
+async def set_responsible_admin(
+        pk: int,
+        mechanic_pk: int,
+        db: AsyncSession = Depends(get_db),
+        _token: str = Depends(verify_admin_role),
+):
+    """
+    Назначить ответственного механика. Только для администратора.
+    """
+    order = await get_prefetched_order(pk, db)
+    if not order:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+    mechanic = await db.get(Profile, mechanic_pk)
+    if not mechanic:
+        raise HTTPException(status.HTTP_404_NOT_FOUND)
+    if not mechanic.is_mechanic:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail='Назначаемый пользователь не обладает правами механика',
+        )
+    if not mechanic.is_active:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail='Назначаемый пользователь не активен',
+        )
+    order.responsible_mechanic_id = mechanic.id
+    db.add(order)
+    await db.commit()
+    return order
 
 
 @order_router.post('/{pk}/close', response_model=OrderDetailData)
