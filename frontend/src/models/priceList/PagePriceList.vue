@@ -16,7 +16,8 @@ export interface PriceListItem {
   isWork: boolean
   isUsing: boolean
 }
-interface NewPriceListItem {
+
+export interface NewPriceListItem {
   title: string
   unit: string
   price: number
@@ -24,9 +25,15 @@ interface NewPriceListItem {
   is_work: boolean
   using: boolean
 }
+
 const userStore = useUserStore()
 const tableData = reactive<PriceListItem[]>([])
 const dialogVisible = ref(false)
+const isWork = ref(false)
+
+const editingId = ref<number | null>(null)
+const initialDialogData = ref<NewPriceListItem | null>(null)
+
 const columns = [
   { label: '№', key: 'number' },
   { label: 'Наименование', key: 'title' },
@@ -35,7 +42,6 @@ const columns = [
   { label: 'В наличии', key: 'inStrokeQuantity' },
 ]
 
-const isWork = ref(false)
 const fetchData = async () => {
   try {
     const response = await api.get('/price_list')
@@ -58,62 +64,105 @@ const fetchData = async () => {
   }
 }
 
-const handleAddItem = async (newItem: NewPriceListItem) => {
+const handleSaveItem = async (formData: NewPriceListItem) => {
   try {
-    await api.post('/price_list', newItem)
+    if (editingId.value) {
+      await api.put(`/price_list/${editingId.value}`, formData)
+      ElMessage.success('Позиция успешно обновлена!')
+    } else {
+      await api.post('/price_list', formData)
+      ElMessage.success('Позиция успешно добавлена!')
+    }
+
     dialogVisible.value = false
-    ElMessage.success('Позиция успешно добавлена!')
     await fetchData()
   } catch (error) {
-    console.error('Ошибка при добавлении позиции:', error)
-    ElMessage.error('Произошла ошибка при добавлении позиции.')
+    console.error('Ошибка при сохранении позиции:', error)
+    ElMessage.error('Произошла ошибка при сохранении.')
   }
 }
-const openAddWork = () => {
-  isWork.value = true
+
+const openAddDialog = (work: boolean) => {
+  isWork.value = work
+  editingId.value = null
+  initialDialogData.value = null
   dialogVisible.value = true
 }
-const openAddTovar = () => {
-  isWork.value = false
-  dialogVisible.value = true
-}
-const toArchive = async (item: PriceListItem) => {
-  const id = item.id
-  await api.put(`/price_list/${id}`, {
-    id: item.id,
-    number: item.number,
+
+const openEditItem = (item: PriceListItem) => {
+  isWork.value = item.isWork
+  editingId.value = item.id
+
+  initialDialogData.value = {
     title: item.title,
     unit: item.unit,
     price: item.price,
     in_stock_quantity: item.inStrokeQuantity,
     is_work: item.isWork,
-    using: false,
-  })
-  await fetchData()
+    using: item.isUsing,
+  }
+
+  dialogVisible.value = true
 }
+
+const toArchive = async (item: PriceListItem) => {
+  try {
+    const id = item.id
+    await api.put(`/price_list/${id}`, {
+      title: item.title,
+      unit: item.unit,
+      price: item.price,
+      in_stock_quantity: item.inStrokeQuantity,
+      is_work: item.isWork,
+      using: false,
+    })
+    ElMessage.success('Позиция перемещена в архив')
+    await fetchData()
+  } catch (error) {
+    ElMessage.error('Ошибка при архивации')
+  }
+}
+
 onMounted(fetchData)
 </script>
 
 <template>
   <div class="flex flex-col gap-4 p-10">
     <div v-if="userStore.isAdmin" class="self-end flex gap-3">
-      <el-button type="success" @click="openAddTovar"> Добавить товар </el-button>
-      <el-button type="success" @click="openAddWork"> Добавить работу </el-button>
+      <el-button type="success" @click="openAddDialog(false)"> Добавить товар </el-button>
+      <el-button type="success" @click="openAddDialog(true)"> Добавить работу </el-button>
     </div>
 
     <PriceListTable :items="tableData" :columns="columns">
       <template #actions="{ item }">
-        <el-button
-          v-if="item.isUsing && userStore.isAdmin"
-          type="danger"
-          size="small"
-          @click="toArchive(item)"
-          >В архив</el-button
-        >
+        <div class="flex gap-2">
+          <el-button
+            v-if="item.isUsing && userStore.isAdmin"
+            type="primary"
+            size="small"
+            @click="openEditItem(item)"
+          >
+            Редактировать
+          </el-button>
+
+          <el-button
+            v-if="item.isUsing && userStore.isAdmin"
+            type="danger"
+            size="small"
+            @click="toArchive(item)"
+          >
+            В архив
+          </el-button>
+        </div>
       </template>
     </PriceListTable>
 
-    <AddPriceListDialog v-model:visible="dialogVisible" :is-work="isWork" @save="handleAddItem" />
+    <AddPriceListDialog
+      v-model:visible="dialogVisible"
+      :is-work="isWork"
+      :initial-data="initialDialogData"
+      @save="handleSaveItem"
+    />
   </div>
 </template>
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, watch } from 'vue'
+import { reactive, watch, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 
 interface NewPriceListItem {
@@ -14,7 +14,9 @@ interface NewPriceListItem {
 const props = defineProps<{
   visible: boolean
   isWork: boolean
+  initialData?: NewPriceListItem | null
 }>()
+
 const emit = defineEmits(['update:visible', 'save'])
 
 const defaultNewItem: NewPriceListItem = {
@@ -25,13 +27,27 @@ const defaultNewItem: NewPriceListItem = {
   is_work: props.isWork,
   using: true,
 }
+
 const newItemForm = reactive<NewPriceListItem>({ ...defaultNewItem })
+
+const dialogTitle = computed(() => {
+  const action = props.initialData ? 'Редактировать' : 'Добавить'
+  const subject = props.isWork ? 'работу' : 'товар'
+  return `${action} ${subject} ${props.initialData ? 'в прейскуранте' : 'в прейскурант'}`
+})
 
 watch(
   () => props.visible,
   (newValue) => {
     if (newValue) {
-      Object.assign(newItemForm, defaultNewItem)
+      if (props.initialData) {
+        Object.assign(newItemForm, props.initialData)
+      } else {
+        Object.assign(newItemForm, {
+          ...defaultNewItem,
+          is_work: props.isWork,
+        })
+      }
     }
   },
 )
@@ -41,13 +57,13 @@ watch(
     newItemForm.is_work = newValue
   },
 )
+
 const handleSaveClick = () => {
   if (!newItemForm.title) {
     ElMessage.warning('Пожалуйста, введите наименование.')
     return
   }
-
-  emit('save', newItemForm)
+  emit('save', { ...newItemForm })
 }
 
 const handleClose = () => {
@@ -56,22 +72,20 @@ const handleClose = () => {
 </script>
 
 <template>
-  <el-dialog
-    :model-value="visible"
-    :title="`Добавить ${isWork ? 'работу' : 'товар'} в прейскурант`"
-    width="500px"
-    @close="handleClose"
-  >
+  <el-dialog :model-value="visible" :title="dialogTitle" width="500px" @close="handleClose">
     <el-form :model="newItemForm" label-width="150px">
       <el-form-item label="Наименование" required>
         <el-input v-model="newItemForm.title" />
       </el-form-item>
+
       <el-form-item label="Ед. измерения">
         <el-input v-model="newItemForm.unit" />
       </el-form-item>
+
       <el-form-item label="Цена">
         <el-input-number v-model="newItemForm.price" :min="0" controls-position="right" />
       </el-form-item>
+
       <el-form-item v-if="!newItemForm.is_work" label="В наличии">
         <el-input-number
           v-model="newItemForm.in_stock_quantity"
@@ -84,6 +98,7 @@ const handleClose = () => {
         <el-checkbox v-model="newItemForm.using" />
       </el-form-item>
     </el-form>
+
     <template #footer>
       <span class="dialog-footer">
         <el-button @click="handleClose">Отмена</el-button>
