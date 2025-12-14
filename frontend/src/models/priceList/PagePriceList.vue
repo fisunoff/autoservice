@@ -96,7 +96,7 @@ onMounted(fetchData)
 
 <template>
   <div class="flex flex-col gap-4 p-10">
-    <div class="self-end flex gap-3">
+    <div v-if="userStore.isAdmin" class="self-end flex gap-3">
       <el-button type="success" @click="openAddTovar"> Добавить товар </el-button>
       <el-button type="success" @click="openAddWork"> Добавить работу </el-button>
     </div>
