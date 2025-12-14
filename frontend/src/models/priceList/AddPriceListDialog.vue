@@ -22,7 +22,7 @@ const defaultNewItem: NewPriceListItem = {
   unit: '',
   price: 0,
   in_stock_quantity: 0,
-  is_work: false,
+  is_work: props.isWork,
   using: true,
 }
 const newItemForm = reactive<NewPriceListItem>({ ...defaultNewItem })
