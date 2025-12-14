@@ -40,7 +40,7 @@ watch(
       } else if (props.mode === 'edit' && props.itemToEdit) {
         form.quantity = props.itemToEdit.quantity
         form.price = props.itemToEdit.price
-        form.itemId = null // В режиме редактирования ID не выбирается
+        form.itemId = null
       }
     }
   },

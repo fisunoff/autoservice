@@ -106,8 +106,8 @@ const fetchPriceLists = async () => {
       api.get('/price_list/works'),
       api.get('/price_list/details'),
     ])
-    priceListWorks.value = worksRes.data
-    priceListDetails.value = detailsRes.data
+    priceListWorks.value = worksRes.data.filter((w) => w.using)
+    priceListDetails.value = detailsRes.data.filter((w) => w.using)
   } catch (error) {
     ElMessage.error('Не удалось загрузить прайс-листы.')
     console.error(error)
