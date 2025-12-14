@@ -20,18 +20,15 @@ const defaultNewItem: NewWiki = {
 }
 const newItemForm = ref<NewWiki>({})
 const carsList = reactive<Car[]>([])
-
-const uniqueBrands = computed(() => {
-  const brandsSet = new Set<string>()
-  carsList.forEach((car) => {
-    if (car.brand) brandsSet.add(car.brand)
-  })
-  return Array.from(brandsSet).sort()
-})
+const fetchBrands = async () => {
+  const cars = await api.options(`/wiki`)
+  carsList.splice(0, carsList.length, ...cars.data.options.brands)
+}
 
 watch(
   () => props.visible,
-  (newValue) => {
+  async (newValue) => {
+    await fetchBrands()
     if (newValue) {
       if (props.item) {
         newItemForm.value = {
@@ -44,11 +41,6 @@ watch(
   },
 )
 
-const fetchCars = async () => {
-  const cars = (await api.get('/car')).data
-  carsList.splice(0, carsList.length, ...cars)
-}
-
 const handleSaveClick = () => {
   emit('save', newItemForm.value)
 }
@@ -56,10 +48,6 @@ const handleSaveClick = () => {
 const handleClose = () => {
   emit('update:visible', false)
 }
-
-onMounted(async () => {
-  await fetchCars()
-})
 
 const title = computed(() =>
   newItemForm.value.id ? 'Изменить запись базы знаний' : 'Добавить новую запись в базу знаний',
@@ -85,7 +73,7 @@ const title = computed(() =>
           placeholder=""
           style="width: 100%"
         >
-          <el-option v-for="brand in uniqueBrands" :key="brand" :label="brand" :value="brand" />
+          <el-option v-for="brand in carsList" :key="brand" :label="brand" :value="brand" />
         </el-select>
       </el-form-item>
     </el-form>
