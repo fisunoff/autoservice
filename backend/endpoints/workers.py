@@ -18,7 +18,7 @@ workers_router = APIRouter(
 @workers_router.get('/', response_model=list[ReadWorkerData])
 async def get_workers(
         db: AsyncSession = Depends(get_db),
-        _token_payload: dict = Depends(verify_admin_role),
+        _token_payload: dict = Depends(verify_token),
 ) -> Sequence[ReadWorkerData]:
     """
     Список всех сотрудников (в том числе и уже уволенных).
