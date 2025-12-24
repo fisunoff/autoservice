@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
+import { computed } from 'vue'
 
 import {
   PRICE_LIST_NAME,
@@ -10,6 +11,8 @@ import {
   WIKI_NAME,
 } from '@/router'
 
+const route = useRoute()
+
 const navLinks = [
   { text: 'Заказ наряд', name: WORK_ORDERS_NAME },
   { text: 'Прейскурант', name: PRICE_LIST_NAME },
@@ -18,6 +21,11 @@ const navLinks = [
   { text: 'Автомобили', name: CARS_NAME },
   { text: 'База знаний', name: WIKI_NAME },
 ]
+
+// Функция для проверки активного маршрута
+const isActive = (routeName: string) => {
+  return computed(() => route.name === routeName)
+}
 </script>
 
 <template>
@@ -28,6 +36,7 @@ const navLinks = [
         :key="link.name"
         :to="{ name: link.name }"
         class="nav-button"
+        :class="{ 'active': isActive(link.name).value }"
       >
         {{ link.text }}
       </RouterLink>
@@ -47,7 +56,6 @@ const navLinks = [
 
 .navigation {
   width: 100%;
-
   display: flex;
   gap: 0 10px;
 }
@@ -68,5 +76,10 @@ const navLinks = [
 
 .nav-button:hover {
   background-color: #80cbc4;
+}
+
+.nav-button.active {
+  background-color: #26a69a;
+  color: white;
 }
 </style>
